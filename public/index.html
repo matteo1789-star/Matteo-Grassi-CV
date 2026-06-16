@@ -8,172 +8,54 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0a0f1e;
-      --surface: #111827;
-      --card: #1a2235;
-      --border: rgba(255,255,255,0.08);
-      --accent: #0077b5;
-      --accent2: #00a0dc;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
-      --subtle: #475569;
-      --radius: 14px;
-      --radius-sm: 8px;
-      --shadow: 0 8px 32px rgba(0,0,0,0.4);
-      --tr: 0.25s ease;
+      --bg: #0a0f1e; --surface: #111827; --card: #1a2235;
+      --border: rgba(255,255,255,0.08); --accent: #0077b5; --accent2: #00a0dc;
+      --text: #f1f5f9; --muted: #94a3b8; --subtle: #475569;
+      --radius: 14px; --radius-sm: 8px; --shadow: 0 8px 32px rgba(0,0,0,0.4); --tr: 0.25s ease;
     }
     html { scroll-behavior: smooth; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh; display: flex; flex-direction: column; }
     a { color: var(--accent2); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    .header {
-      background: rgba(10,15,30,0.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: 1rem 2rem;
-      display: flex;
-      align-items: center;
-      gap: 1.25rem;
-      flex-wrap: wrap;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .header-photo {
-      width: 56px; height: 56px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid var(--accent);
-      box-shadow: 0 0 16px rgba(0,119,181,0.4);
-      flex-shrink: 0;
-    }
-    .header-photo-placeholder {
-      width: 56px; height: 56px;
-      border-radius: 50%;
-      background: var(--card);
-      border: 2px solid var(--accent);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem; flex-shrink: 0;
-    }
+    .header { background: rgba(10,15,30,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+    .header-photo { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); box-shadow: 0 0 16px rgba(0,119,181,0.4); flex-shrink: 0; }
+    .header-photo-placeholder { width: 56px; height: 56px; border-radius: 50%; background: var(--card); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
     .header-info { flex: 1; min-width: 160px; }
     .header-name { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.02em; }
     .header-role { font-size: 0.8rem; color: var(--muted); }
     .header-contacts { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
-    .chip {
-      display: inline-flex; align-items: center; gap: 0.35rem;
-      padding: 0.35rem 0.75rem;
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 20px; font-size: 0.78rem; color: var(--text);
-      transition: all var(--tr); white-space: nowrap;
-    }
+    .chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; background: var(--card); border: 1px solid var(--border); border-radius: 20px; font-size: 0.78rem; color: var(--text); transition: all var(--tr); white-space: nowrap; }
     .chip:hover { border-color: var(--accent2); color: var(--accent2); text-decoration: none; }
     .chip svg { width: 13px; height: 13px; flex-shrink: 0; }
     .header-lang { display: flex; gap: 0.3rem; margin-left: auto; }
-    .lang-btn {
-      padding: 0.2rem 0.55rem; border-radius: 20px; font-size: 0.72rem;
-      font-weight: 600; cursor: pointer; border: 1px solid var(--border);
-      background: transparent; color: var(--muted);
-      transition: all var(--tr); text-transform: uppercase;
-    }
+    .lang-btn { padding: 0.2rem 0.55rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all var(--tr); text-transform: uppercase; }
     .lang-btn.active, .lang-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .main {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 1.5rem;
-      padding: 1.5rem 2rem;
-      max-width: 1200px;
-      margin: 0 auto;
-      width: 100%;
-    }
+    .main { flex: 1; display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; padding: 1.5rem 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
     .chat-panel { display: flex; flex-direction: column; gap: 1rem; }
     .chat-panel-title { font-size: 0.7rem; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.1em; }
-    .chat-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      display: flex;
-      flex-direction: column;
-      height: calc(100vh - 180px);
-      min-height: 420px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    .chat-header {
-      padding: 1rem 1.25rem;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      display: flex; align-items: center; gap: 0.75rem;
-      flex-shrink: 0;
-    }
-    .chat-avatar {
-      width: 38px; height: 38px; border-radius: 50%;
-      background: rgba(255,255,255,0.2);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem;
-    }
+    .chat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; height: calc(100vh - 180px); min-height: 420px; box-shadow: var(--shadow); overflow: hidden; }
+    .chat-header { padding: 1rem 1.25rem; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+    .chat-avatar { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
     .chat-header-info .chat-title { font-size: 0.95rem; font-weight: 700; }
     .chat-header-info .chat-status { font-size: 0.72rem; opacity: 0.85; }
-    .chat-messages {
-      flex: 1; overflow-y: auto; padding: 1.25rem;
-      display: flex; flex-direction: column; gap: 0.75rem;
-      min-height: 0;
-    }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; min-height: 0; }
     .chat-messages::-webkit-scrollbar { width: 4px; }
     .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-    .msg {
-      max-width: 80%; padding: 0.7rem 1rem;
-      border-radius: 14px; font-size: 0.88rem; line-height: 1.55;
-      word-break: break-word;
-    }
+    .msg { max-width: 80%; padding: 0.7rem 1rem; border-radius: 14px; font-size: 0.88rem; line-height: 1.55; word-break: break-word; }
     .msg-bot { background: var(--card); color: var(--text); border-radius: 4px 14px 14px 14px; align-self: flex-start; }
     .msg-user { background: var(--accent); color: #fff; border-radius: 14px 4px 14px 14px; align-self: flex-end; }
-    .msg-typing {
-      display: flex; gap: 5px; align-items: center;
-      padding: 0.7rem 1rem; background: var(--card);
-      border-radius: 4px 14px 14px 14px; align-self: flex-start;
-    }
+    .msg-typing { display: flex; gap: 5px; align-items: center; padding: 0.7rem 1rem; background: var(--card); border-radius: 4px 14px 14px 14px; align-self: flex-start; }
     .msg-typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: bounce 1.2s infinite; }
     .msg-typing span:nth-child(2) { animation-delay: 0.2s; }
     .msg-typing span:nth-child(3) { animation-delay: 0.4s; }
     @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-    .suggestions {
-      padding: 0 1.25rem 0.75rem;
-      display: flex; flex-wrap: wrap; gap: 0.5rem;
-      flex-shrink: 0;
-    }
-    .suggestion-btn {
-      padding: 0.4rem 0.85rem;
-      background: rgba(0,119,181,0.1);
-      border: 1px solid rgba(0,119,181,0.3);
-      border-radius: 20px; font-size: 0.78rem;
-      color: var(--accent2); cursor: pointer;
-      transition: all var(--tr); text-align: left;
-      font-family: inherit;
-    }
+    .suggestions { padding: 0 1.25rem 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem; flex-shrink: 0; }
+    .suggestion-btn { padding: 0.4rem 0.85rem; background: rgba(0,119,181,0.1); border: 1px solid rgba(0,119,181,0.3); border-radius: 20px; font-size: 0.78rem; color: var(--accent2); cursor: pointer; transition: all var(--tr); text-align: left; font-family: inherit; }
     .suggestion-btn:hover { background: rgba(0,119,181,0.2); border-color: var(--accent2); transform: translateY(-1px); }
     .chat-input-area { display: flex; gap: 0.5rem; padding: 0.85rem 1.25rem; border-top: 1px solid var(--border); flex-shrink: 0; }
-    .chat-input {
-      flex: 1; background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 0.65rem 1rem;
-      color: var(--text); font-size: 0.88rem;
-      resize: none; outline: none; font-family: inherit;
-      transition: border-color var(--tr);
-    }
+    .chat-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.65rem 1rem; color: var(--text); font-size: 0.88rem; resize: none; outline: none; font-family: inherit; transition: border-color var(--tr); }
     .chat-input:focus { border-color: var(--accent); }
-    .chat-send {
-      width: 42px; height: 42px; border-radius: var(--radius-sm);
-      background: var(--accent); border: none; color: #fff;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: all var(--tr); flex-shrink: 0;
-    }
+    .chat-send { width: 42px; height: 42px; border-radius: var(--radius-sm); background: var(--accent); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all var(--tr); flex-shrink: 0; }
     .chat-send:hover { background: var(--accent2); transform: scale(1.05); }
     .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
     .cv-panel { display: flex; flex-direction: column; gap: 1rem; height: calc(100vh - 100px); overflow-y: auto; padding-right: 4px; }
@@ -200,10 +82,6 @@
     .lang-dots-sm { display: flex; gap: 3px; }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
     .dot.on { background: var(--accent); }
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-    .stat-mini { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem; text-align: center; }
-    .stat-mini-num { font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .stat-mini-label { font-size: 0.65rem; color: var(--muted); margin-top: 0.15rem; }
     footer { padding: 1rem 2rem; text-align: center; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--subtle); }
     @media (max-width: 768px) {
       .header { padding: 0.75rem 1rem; }
@@ -252,7 +130,7 @@
       <div class="chat-header">
         <div class="chat-avatar">🤖</div>
         <div class="chat-header-info">
-          <div class="chat-title" data-i18n="chat_title">AI di Matteo</div>
+          <div class="chat-title" data-i18n="chat_title">Chatta con Matteo</div>
           <div class="chat-status" data-i18n="chat_status">Sempre disponibile · Powered by AI</div>
         </div>
       </div>
@@ -283,7 +161,7 @@ const i18n = {
   it: {
     hero_subtitle: 'Senior Account Director · LinkedIn · Dublin',
     chat_panel_label: 'Chatta con la mia AI',
-    chat_title: 'AI di Matteo',
+    chat_title: 'Chatta con Matteo',
     chat_status: 'Sempre disponibile · Powered by AI',
     chat_welcome: 'Ciao! 👋 Sono l\'assistente AI di Matteo Grassi. Puoi chiedermi della sua esperienza professionale, competenze, background o qualsiasi cosa ti interessi sapere su di lui.',
     chat_placeholder: 'Scrivi un messaggio…',
@@ -299,11 +177,6 @@ const i18n = {
     cv_exp_label: 'Esperienza',
     cv_skills_label: 'Competenze',
     cv_lang_label: 'Lingue',
-    cv_stats_label: 'In sintesi',
-    stat_years: 'Anni exp.',
-    stat_langs: 'Lingue',
-    stat_sales: 'B2B Expert',
-    stat_global: 'Global',
     exp: [
       { role: 'Senior Account Director', company: 'LinkedIn', period: 'Ott 2023 – Presente' },
       { role: 'Account Executive', company: 'Revolut', period: 'Mag – Ott 2023' },
@@ -330,7 +203,7 @@ const i18n = {
   en: {
     hero_subtitle: 'Senior Account Director · LinkedIn · Dublin',
     chat_panel_label: 'Chat with my AI',
-    chat_title: 'Matteo\'s AI',
+    chat_title: 'Chat with Matteo',
     chat_status: 'Always available · Powered by AI',
     chat_welcome: 'Hi! 👋 I\'m Matteo Grassi\'s AI assistant. Ask me anything about his professional experience, skills, background, or anything else you\'d like to know.',
     chat_placeholder: 'Type a message…',
@@ -346,11 +219,6 @@ const i18n = {
     cv_exp_label: 'Experience',
     cv_skills_label: 'Skills',
     cv_lang_label: 'Languages',
-    cv_stats_label: 'At a glance',
-    stat_years: 'Yrs exp.',
-    stat_langs: 'Languages',
-    stat_sales: 'B2B Expert',
-    stat_global: 'Global',
     exp: [
       { role: 'Senior Account Director', company: 'LinkedIn', period: 'Oct 2023 – Present' },
       { role: 'Account Executive', company: 'Revolut', period: 'May – Oct 2023' },
@@ -377,7 +245,7 @@ const i18n = {
   es: {
     hero_subtitle: 'Director de Cuentas Senior · LinkedIn · Dublín',
     chat_panel_label: 'Habla con mi IA',
-    chat_title: 'IA de Matteo',
+    chat_title: 'Chatea con Matteo',
     chat_status: 'Siempre disponible · Powered by AI',
     chat_welcome: '¡Hola! 👋 Soy el asistente de IA de Matteo Grassi. Puedes preguntarme sobre su experiencia profesional, habilidades, trayectoria o cualquier cosa que quieras saber.',
     chat_placeholder: 'Escribe un mensaje…',
@@ -393,11 +261,6 @@ const i18n = {
     cv_exp_label: 'Experiencia',
     cv_skills_label: 'Habilidades',
     cv_lang_label: 'Idiomas',
-    cv_stats_label: 'En resumen',
-    stat_years: 'Años exp.',
-    stat_langs: 'Idiomas',
-    stat_sales: 'Experto B2B',
-    stat_global: 'Global',
     exp: [
       { role: 'Director de Cuentas Senior', company: 'LinkedIn', period: 'Oct 2023 – Presente' },
       { role: 'Account Executive', company: 'Revolut', period: 'May – Oct 2023' },
@@ -447,15 +310,6 @@ function render() {
 
   const cv = document.getElementById('cvPanel');
   cv.innerHTML = `
-    <div>
-      <div class="cv-section-label">${t.cv_stats_label}</div>
-      <div class="stats-grid">
-        <div class="stat-mini"><div class="stat-mini-num">15+</div><div class="stat-mini-label">${t.stat_years}</div></div>
-        <div class="stat-mini"><div class="stat-mini-num">3</div><div class="stat-mini-label">${t.stat_langs}</div></div>
-        <div class="stat-mini"><div class="stat-mini-num">B2B</div><div class="stat-mini-label">${t.stat_sales}</div></div>
-        <div class="stat-mini"><div class="stat-mini-num">🌍</div><div class="stat-mini-label">${t.stat_global}</div></div>
-      </div>
-    </div>
     <div>
       <div class="cv-section-label">${t.cv_exp_label}</div>
       <div class="cv-card">
