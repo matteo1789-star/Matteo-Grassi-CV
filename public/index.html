@@ -22,7 +22,8 @@
     .header-photo-placeholder { width: 56px; height: 56px; border-radius: 50%; background: var(--card); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
     .header-info { flex: 1; min-width: 160px; }
     .header-name { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.02em; }
-    .header-role { font-size: 0.8rem; color: var(--muted); }
+    .header-role { font-size: 0.8rem; color: var(--accent2); font-weight: 500; margin-bottom: 0.2rem; }
+    .header-bio { font-size: 0.75rem; color: var(--muted); max-width: 340px; line-height: 1.4; }
     .header-contacts { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
     .chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; background: var(--card); border: 1px solid var(--border); border-radius: 20px; font-size: 0.78rem; color: var(--text); transition: all var(--tr); white-space: nowrap; }
     .chip:hover { border-color: var(--accent2); color: var(--accent2); text-decoration: none; }
@@ -34,10 +35,11 @@
     .chat-panel { display: flex; flex-direction: column; gap: 1rem; }
     .chat-panel-title { font-size: 0.7rem; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.1em; }
     .chat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; height: calc(100vh - 180px); min-height: 420px; box-shadow: var(--shadow); overflow: hidden; }
-    .chat-header { padding: 1rem 1.25rem; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
-    .chat-avatar { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
-    .chat-header-info .chat-title { font-size: 0.95rem; font-weight: 700; }
-    .chat-header-info .chat-status { font-size: 0.72rem; opacity: 0.85; }
+    .chat-header { padding: 0.9rem 1.25rem; background: linear-gradient(135deg, #0a2540, #0077b5); display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .chat-header-icon { width: 32px; height: 32px; border-radius: 6px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .chat-header-icon svg { width: 16px; height: 16px; }
+    .chat-header-info .chat-title { font-size: 0.9rem; font-weight: 700; letter-spacing: -0.01em; }
+    .chat-header-info .chat-status { font-size: 0.68rem; opacity: 0.75; letter-spacing: 0.02em; }
     .chat-messages { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; min-height: 0; }
     .chat-messages::-webkit-scrollbar { width: 4px; }
     .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -101,6 +103,7 @@
   <div class="header-info">
     <div class="header-name">Matteo Grassi</div>
     <div class="header-role" data-i18n="hero_subtitle">Senior Account Director · LinkedIn · Dublin</div>
+    <div class="header-bio" data-i18n="header_bio">15+ years in B2B tech, SaaS & digital marketing. Driving enterprise transformation at LinkedIn, Dublin.</div>
   </div>
   <div class="header-contacts">
     <a href="tel:+3530892334107" class="chip">
@@ -117,28 +120,32 @@
     </a>
   </div>
   <div class="header-lang">
-    <button class="lang-btn active" onclick="setLang('it')">IT</button>
-    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('it')">IT</button>
+    <button class="lang-btn active" onclick="setLang('en')">EN</button>
     <button class="lang-btn" onclick="setLang('es')">ES</button>
   </div>
 </header>
 
 <div class="main">
   <div class="chat-panel">
-    <div class="chat-panel-title" data-i18n="chat_panel_label">Chatta con la mia AI</div>
+    <div class="chat-panel-title" data-i18n="chat_panel_label">Chat with my AI</div>
     <div class="chat-box">
       <div class="chat-header">
-        <div class="chat-avatar">🤖</div>
+        <div class="chat-header-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z"/>
+          </svg>
+        </div>
         <div class="chat-header-info">
-          <div class="chat-title" data-i18n="chat_title">Chatta con Matteo</div>
-          <div class="chat-status" data-i18n="chat_status">Sempre disponibile · Powered by AI</div>
+          <div class="chat-title" data-i18n="chat_title">AI Interview Assistant</div>
+          <div class="chat-status" data-i18n="chat_status">Always available · Powered by AI</div>
         </div>
       </div>
       <div class="chat-messages" id="chatMessages"></div>
       <div class="suggestions" id="suggestions"></div>
       <div class="chat-input-area">
         <textarea class="chat-input" id="chatInput" rows="1"
-          placeholder="Scrivi un messaggio…"
+          placeholder="Type a message…"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
           oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
         <button class="chat-send" id="sendBtn" onclick="sendMessage()">
@@ -153,15 +160,16 @@
 </div>
 
 <footer>
-  <p data-i18n="footer_text">© 2026 Matteo Grassi · Tutti i diritti riservati</p>
+  <p data-i18n="footer_text">© 2026 Matteo Grassi · All rights reserved</p>
 </footer>
 
 <script>
 const i18n = {
   it: {
     hero_subtitle: 'Senior Account Director · LinkedIn · Dublin',
+    header_bio: 'Oltre 15 anni in B2B tech, SaaS e digital marketing. Guida programmi di trasformazione enterprise presso LinkedIn, Dublino.',
     chat_panel_label: 'Chatta con la mia AI',
-    chat_title: 'Chatta con Matteo',
+    chat_title: 'AI Interview Assistant',
     chat_status: 'Sempre disponibile · Powered by AI',
     chat_welcome: 'Ciao! 👋 Sono l\'assistente AI di Matteo Grassi. Puoi chiedermi della sua esperienza professionale, competenze, background o qualsiasi cosa ti interessi sapere su di lui.',
     chat_placeholder: 'Scrivi un messaggio…',
@@ -202,8 +210,9 @@ const i18n = {
   },
   en: {
     hero_subtitle: 'Senior Account Director · LinkedIn · Dublin',
+    header_bio: '15+ years in B2B tech, SaaS & digital marketing. Driving enterprise transformation at LinkedIn, Dublin.',
     chat_panel_label: 'Chat with my AI',
-    chat_title: 'Chat with Matteo',
+    chat_title: 'AI Interview Assistant',
     chat_status: 'Always available · Powered by AI',
     chat_welcome: 'Hi! 👋 I\'m Matteo Grassi\'s AI assistant. Ask me anything about his professional experience, skills, background, or anything else you\'d like to know.',
     chat_placeholder: 'Type a message…',
@@ -244,8 +253,9 @@ const i18n = {
   },
   es: {
     hero_subtitle: 'Director de Cuentas Senior · LinkedIn · Dublín',
+    header_bio: 'Más de 15 años en B2B tech, SaaS y marketing digital. Liderando transformación enterprise en LinkedIn, Dublín.',
     chat_panel_label: 'Habla con mi IA',
-    chat_title: 'Chatea con Matteo',
+    chat_title: 'AI Interview Assistant',
     chat_status: 'Siempre disponible · Powered by AI',
     chat_welcome: '¡Hola! 👋 Soy el asistente de IA de Matteo Grassi. Puedes preguntarme sobre su experiencia profesional, habilidades, trayectoria o cualquier cosa que quieras saber.',
     chat_placeholder: 'Escribe un mensaje…',
@@ -286,7 +296,7 @@ const i18n = {
   }
 };
 
-let lang = 'it';
+let lang = 'en';
 let chatReady = false;
 
 function setLang(l) { lang = l; render(); }
@@ -405,10 +415,10 @@ async function sendMessage() {
     });
     const data = await res.json();
     typing.remove();
-    addBotMsg(data.reply || data.error || 'Errore nella risposta.');
+    addBotMsg(data.reply || data.error || 'Error in response.');
   } catch {
     typing.remove();
-    addBotMsg('⚠️ Impossibile connettersi al server. Riprova più tardi.');
+    addBotMsg('⚠️ Unable to connect to server. Please try again later.');
   } finally {
     btn.disabled = false;
     input.focus();
