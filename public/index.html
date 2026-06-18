@@ -1,1 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matteo Grassi — Portfolio</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --sidebar-bg: #111827;
+      --card: rgba(255,255,255,0.04); --border: rgba(255,255,255,0.08);
+      --accent: #0077b5; --accent2: #00a0dc;
+      --text: #e2e8f0; --muted: #94a3b8; --dim: #64748b;
+      --gold: #f59e0b;
+      --chat-bg: #f1f5f9; --chat-surface: #ffffff; --chat-border: #e2e8f0;
+      --chat-text: #0f172a; --chat-sub: #64748b;
+    }
+    html, body { margin: 0; padding: 0; overflow: hidden; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.6;
+    }
+
+    /* ── LAYOUT: fixed inset fills exact viewport on any browser/device ── */
+    .layout {
+      position: fixed;
+      inset: 0;            /* top/right/bottom/left = 0, always fills screen */
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── MOBILE: tab switcher ── */
+    @media (max-width: 768px) {
+      .layout { flex-direction: column; }
+      .sidebar  { display: none; }
+      .chat-main { display: none; }
+      .sidebar.active   { display: flex; }
+      .chat-main.active { display: flex; }
+      .tab-bar {
+        position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+        display: flex; background: var(--sidebar-bg);
+        border-top: 1px solid var(--border); flex-shrink: 0;
+      }
+      .tab-btn {
+        flex: 1; padding: 10px 4px 8px; display: flex; flex-direction: column;
+        align-items: center; gap: 3px; border: none; background: transparent;
+        color: var(--dim); font-size: 0.62rem; font-weight: 600;
+        cursor: pointer; transition: color 0.18s; font-family: inherit;
+      }
+      .tab-btn .ticon { font-size: 1.1rem; }
+      .tab-btn.active { color: var(--accent2); }
+      /* push layout up so content isn't behind tab bar */
+      .layout { bottom: 52px; }
+    }
+    @media (min-width: 769px) {
+      .tab-bar { display: none; }
+      .sidebar   { display: flex !important; }
+      .chat-main { display: flex !important; }
+    }
+
+    /* ══ SIDEBAR ══ */
+    .sidebar {
+      width: 350px; min-width: 280px; max-width: 350px;
+      background: var(--sidebar-bg); border-right: 1px solid var(--border);
+      flex-direction: column; overflow-y: auto; flex-shrink: 0;
+      min-height: 0;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; max-width: 100%; border-right: none; overflow-y: auto; }
+    }
+
+    /* Profile */
+    .profile-block {
+      padding: 26px 22px 18px; text-align: center;
+      background: linear-gradient(180deg, rgba(0,119,181,0.13) 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    .avatar-wrap { display: inline-flex; position: relative; margin-bottom: 12px; }
+    .avatar-ring {
+      width: 88px; height: 88px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      padding: 2.5px; box-shadow: 0 0 0 4px rgba(0,119,181,0.14), 0 6px 22px rgba(0,119,181,0.28);
+    }
+    .avatar-inner {
+      width: 100%; height: 100%; border-radius: 50%;
+      background: linear-gradient(135deg, #1e3a5f, #0f2240);
+      align-items: center; justify-content: center;
+      font-size: 1.9rem; font-weight: 800; color: #fff;
+      /* shown/hidden via JS onerror */
+    }
+    .status-dot {
+      position: absolute; bottom: 4px; right: 0;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #10b981; border: 3px solid var(--sidebar-bg);
+    }
+    .profile-name { font-size: 1.25rem; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 3px; }
+    .profile-title { font-size: 0.8rem; color: var(--accent2); font-weight: 600; margin-bottom: 5px; }
+    .profile-meta { font-size: 0.74rem; color: var(--dim); margin-bottom: 11px; }
+    .profile-summary { font-size: 0.78rem; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+    .profile-badges { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+    .badge {
+      background: rgba(0,119,181,0.12); border: 1px solid rgba(0,119,181,0.22);
+      color: var(--accent2); padding: 3px 9px; border-radius: 20px; font-size: 0.7rem; font-weight: 500;
+    }
+
+    /* Sidebar section */
+    .sb { padding: 14px 18px; border-bottom: 1px solid var(--border); }
+    .sb:last-child { border-bottom: none; }
+    .sb-title { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--dim); margin-bottom: 10px; }
+
+    /* Experience */
+    .exp-item { display: flex; gap: 9px; margin-bottom: 11px; }
+    .exp-item:last-child { margin-bottom: 0; }
+    .exp-logo {
+      width: 32px; height: 32px; border-radius: 7px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border); margin-top: 1px;
+    }
+    .exp-logo.cur { background: rgba(0,119,181,0.15); border-color: rgba(0,119,181,0.28); }
+    .exp-info { flex: 1; min-width: 0; }
+    .exp-role { font-size: 0.8rem; font-weight: 700; color: #fff; }
+    .exp-co { font-size: 0.74rem; color: var(--accent2); font-weight: 500; }
+    .exp-period { font-size: 0.68rem; color: var(--dim); }
+
+    /* Music mini */
+    .music-mini {
+      display: flex; gap: 9px; align-items: flex-start;
+      background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.16);
+      border-radius: 8px; padding: 9px 10px;
+    }
+    .music-mini-ico { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+    .music-mini-role { font-size: 0.8rem; font-weight: 700; color: #fff; }
+    .music-mini-co { font-size: 0.74rem; color: var(--gold); font-weight: 500; }
+    .music-mini-period { font-size: 0.67rem; color: var(--dim); }
+    .music-mini-desc { font-size: 0.68rem; color: var(--muted); margin-top: 3px; line-height: 1.45; }
+
+    /* Skills — pill chips */
+    .skill-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .skill-chip {
+      font-size: 0.76rem; font-weight: 500; color: var(--text);
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 20px; padding: 5px 12px; white-space: nowrap;
+      transition: background 0.18s, border-color 0.18s;
+    }
+    .skill-chip:hover { background: rgba(0,119,181,0.22); border-color: rgba(0,160,220,0.4); color: #fff; }
+
+    /* Languages */
+    .lang-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); }
+    .lang-row:last-child { border-bottom: none; }
+    .lang-left { display: flex; align-items: center; gap: 7px; }
+    .lang-name { font-size: 0.8rem; font-weight: 600; }
+    .lang-level { font-size: 0.68rem; color: var(--accent2); background: rgba(0,119,181,0.1); border: 1px solid rgba(0,119,181,0.18); padding: 1px 7px; border-radius: 10px; }
+
+    /* Certifications */
+    .cert-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .cert-chip { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; background: rgba(0,119,181,0.09); border: 1px solid rgba(0,119,181,0.18); color: var(--accent2); }
+
+
+    /* Contact bar above chat header */
+    .contact-bar {
+      background: var(--sidebar-bg); border-bottom: 1px solid var(--border);
+      padding: 6px 18px; display: flex; justify-content: flex-end; align-items: center;
+      gap: 6px; flex-shrink: 0; flex-wrap: wrap;
+    }
+    .cbar-link {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.72rem; color: rgba(255,255,255,0.88); text-decoration: none;
+      padding: 3px 9px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: transparent;
+      transition: all 0.18s; white-space: nowrap;
+    }
+    .cbar-link:hover { color: #fff; border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.07); }
+    .cbar-link svg { width: 11px; height: 11px; flex-shrink: 0; }
+
+    /* ══ CHAT MAIN ══ */
+    .chat-main {
+      flex: 1 1 0;
+      min-width: 0; min-height: 0;
+      flex-direction: column;
+      background: var(--chat-bg); overflow: hidden;
+    }
+    @media (max-width: 768px) {
+      .chat-main { width: 100%; }
+    }
+
+    /* Chat top bar */
+    .chat-top {
+      background: linear-gradient(135deg, #0a2540, #0077b5);
+      padding: 13px 18px; display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 10px; flex-shrink: 0;
+    }
+    .chat-top-left { display: flex; align-items: center; gap: 10px; }
+    .chat-logo { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+    .chat-top-title { font-size: 0.92rem; font-weight: 700; color: #fff; }
+    .chat-top-sub { font-size: 0.7rem; color: rgba(255,255,255,0.78); }
+    .lang-tabs { display: flex; gap: 5px; }
+    .lang-tab {
+      padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.32);
+      color: rgba(255,255,255,0.72); font-size: 0.72rem; font-weight: 600;
+      cursor: pointer; background: transparent; font-family: inherit; transition: all 0.18s;
+    }
+    .lang-tab.active, .lang-tab:hover { background: rgba(255,255,255,0.2); color: #fff; border-color: rgba(255,255,255,0.65); }
+    .lang-hint { width: 100%; font-size: 0.67rem; color: rgba(255,255,255,0.6); font-style: italic; margin-top: -4px; }
+
+    /* Suggested tabs */
+    .suggested-tabs {
+      background: var(--chat-surface); border-bottom: 1px solid var(--chat-border);
+      overflow-x: auto; display: flex; flex-shrink: 0; scrollbar-width: none;
+    }
+    .suggested-tabs::-webkit-scrollbar { display: none; }
+    .stab {
+      padding: 9px 14px; font-size: 0.76rem; color: var(--chat-sub);
+      white-space: nowrap; cursor: pointer; border-bottom: 2px solid transparent;
+      border-right: 1px solid var(--chat-border); border-top: none; border-left: none;
+      transition: all 0.18s; background: transparent; font-family: inherit;
+    }
+    .stab:hover, .stab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(0,119,181,0.04); }
+
+    /* Messages */
+    .messages-wrap {
+      flex: 1 1 0;   /* stesso fix: base 0 permette lo shrink corretto */
+      min-height: 0; /* senza questo il div non si comprime mai */
+      overflow-y: auto; padding: 18px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .messages-wrap::-webkit-scrollbar { width: 5px; }
+    .messages-wrap::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .msg { max-width: 80%; padding: 10px 14px; border-radius: 14px; font-size: 0.875rem; line-height: 1.58; }
+    .msg-bot {
+      background: var(--chat-surface); border: 1px solid var(--chat-border);
+      color: var(--chat-text); border-radius: 4px 14px 14px 14px;
+      align-self: flex-start; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .msg-user {
+      background: linear-gradient(135deg, #0077b5, #00a0dc);
+      color: #fff; border-radius: 14px 14px 4px 14px; align-self: flex-end;
+    }
+    .msg-typing { display: flex; gap: 4px; align-items: center; padding: 12px 16px; }
+    .msg-typing span { width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; animation: bounce 1.2s infinite; }
+    .msg-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .msg-typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-7px); } }
+
+    /* Input */
+    .chat-input-row {
+      padding: 11px 15px; background: var(--chat-surface);
+      border-top: 1px solid var(--chat-border);
+      display: flex; gap: 8px; align-items: center; flex-shrink: 0;
+    }
+    .chat-input {
+      flex: 1; border: 1.5px solid var(--chat-border); border-radius: 22px;
+      padding: 9px 16px; font-size: 0.875rem; color: var(--chat-text);
+      background: var(--chat-bg); outline: none; font-family: inherit;
+      transition: border-color 0.2s; resize: none;
+    }
+    .chat-input:focus { border-color: var(--accent); background: #fff; }
+    .chat-input::placeholder { color: #94a3b8; }
+    .chat-send {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, #0077b5, #00a0dc);
+      border: none; color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0; transition: all 0.2s;
+    }
+    .chat-send:hover { transform: scale(1.08); }
+    .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+    .powered { text-align: center; font-size: 0.66rem; color: #94a3b8; padding: 4px 0 7px; background: var(--chat-surface); }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar">
+
+    <div class="profile-block">
+      <div class="avatar-wrap">
+        <div class="avatar-ring">
+          <img id="profilePhoto" src="photo.png" alt="Matteo Grassi"
+               style="width:100%;height:100%;border-radius:50%;object-fit:cover;"
+               onerror="this.style.display='none';document.getElementById('profileInitials').style.display='flex'">
+          <div class="avatar-inner" id="profileInitials" style="display:none">MG</div>
+        </div>
+        <div class="status-dot" title="Open to conversations"></div>
+      </div>
+      <div class="profile-name">Matteo Grassi</div>
+      <div class="profile-title" data-i18n="title">Senior Account Director</div>
+      <div class="profile-meta">🔵 LinkedIn Ireland · 📍 Dublin</div>
+      <p class="profile-summary" data-i18n="summary">
+        Seasoned sales professional with 15+ years across digital marketing, SaaS, and B2B technology. At LinkedIn I lead high-impact transformation programs with C-level stakeholders, combining consultative selling and value-based storytelling to drive ROI.
+      </p>
+      <div class="profile-badges" style="margin-bottom:12px;">
+        <span class="badge">🏆 Enterprise Sales</span>
+        <span class="badge">🚀 SaaS B2B</span>
+        <span class="badge">🤝 C-Level</span>
+        <span class="badge">🌍 IT · EN · ES</span>
+      </div>
+    </div>
+
+    <!-- Experience -->
+    <div class="sb">
+      <div class="sb-title" data-i18n="exp_label">Experience</div>
+
+      <div class="exp-item">
+        <div class="exp-logo cur">🔵</div>
+        <div class="exp-info">
+          <div class="exp-role" data-i18n="exp0_role">Senior Account Manager</div>
+          <div class="exp-co">LinkedIn</div>
+          <div class="exp-period" data-i18n="exp0_period">Oct 2023 – Present · Dublin</div>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-logo">💳</div>
+        <div class="exp-info">
+          <div class="exp-role">Account Executive</div>
+          <div class="exp-co">Revolut</div>
+          <div class="exp-period" data-i18n="exp1_period">May – Oct 2023 · Dublin</div>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-logo">☁️</div>
+        <div class="exp-info">
+          <div class="exp-role">Senior Account Executive</div>
+          <div class="exp-co">Salesforce</div>
+          <div class="exp-period" data-i18n="exp2_period">Apr 2022 – Apr 2023 · Dublin</div>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-logo">🎯</div>
+        <div class="exp-info">
+          <div class="exp-role" data-i18n="exp3_role">Sales Manager / AM / AE – Google Ads</div>
+          <div class="exp-co">Teleperformance</div>
+          <div class="exp-period" data-i18n="exp3_period">Oct 2019 – Apr 2022 · Barcelona</div>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-logo">🏨</div>
+        <div class="exp-info">
+          <div class="exp-role">CS Guest Executive</div>
+          <div class="exp-co">Booking.com</div>
+          <div class="exp-period" data-i18n="exp4_period">May – Oct 2019 · Barcelona</div>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-logo">✈️</div>
+        <div class="exp-info">
+          <div class="exp-role">Hotel Market Manager</div>
+          <div class="exp-co">Ryanair</div>
+          <div class="exp-period" data-i18n="exp5_period">Jun – Dec 2018 · Madrid</div>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-logo">🔍</div>
+        <div class="exp-info">
+          <div class="exp-role" data-i18n="exp6_role">BizDev Manager – Italy & S.Europe</div>
+          <div class="exp-co">HotelsCombined (Kayak)</div>
+          <div class="exp-period" data-i18n="exp6_period">Aug 2016 – Dec 2017 · Barcelona</div>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-logo">💡</div>
+        <div class="exp-info">
+          <div class="exp-role">Senior Digital Consultant</div>
+          <div class="exp-co">Ve Interactive</div>
+          <div class="exp-period" data-i18n="exp7_period">Oct 2015 – Jul 2016 · Milan</div>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-logo">🗺️</div>
+        <div class="exp-info">
+          <div class="exp-role">Account Manager / Exec EMEA</div>
+          <div class="exp-co">TripAdvisor</div>
+          <div class="exp-period" data-i18n="exp8_period">May 2013 – Oct 2015 · Oxford</div>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-logo">📞</div>
+        <div class="exp-info">
+          <div class="exp-role">Bilingual Reservation Sales Agent</div>
+          <div class="exp-co">Sabre Hospitality Solutions</div>
+          <div class="exp-period" data-i18n="exp9_period">Jul 2012 – Mar 2013</div>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-logo">🚢</div>
+        <div class="exp-info">
+          <div class="exp-role">Customer Service – Export Global</div>
+          <div class="exp-co">Maersk Line</div>
+          <div class="exp-period" data-i18n="exp10_period">Jul 2008 – Oct 2009</div>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-logo">📱</div>
+        <div class="exp-info">
+          <div class="exp-role">Regional Field Sales Manager</div>
+          <div class="exp-co">Nokia</div>
+          <div class="exp-period" data-i18n="exp11_period">Jul 2005 – Apr 2008 · Liguria</div>
+        </div>
+      </div>
+
+      <!-- Music: compact -->
+      <div style="margin-top:10px;">
+        <div class="sb-title" style="margin-bottom:7px;" data-i18n="music_label">🎸 Hobby & Passion</div>
+        <div class="music-mini">
+          <div class="music-mini-ico">🎸</div>
+          <div>
+            <div class="music-mini-role" data-i18n="music_role">Lead Guitarist</div>
+            <div class="music-mini-co">Klasse Kriminale</div>
+            <div class="music-mini-period" data-i18n="music_period">Sep 1997 – Jul 2007 · 9 yrs 11 mo</div>
+            <div class="music-mini-desc" data-i18n="music_desc">300+ concerts · 7 studio albums · Europe, US, Canada, Japan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div class="sb">
+      <div class="sb-title" data-i18n="skills_label">Key Skills</div>
+      <div class="skill-chips">
+        <span class="skill-chip">B2B Enterprise Sales</span>
+        <span class="skill-chip">Strategic Account Mgmt</span>
+        <span class="skill-chip">SaaS Sales</span>
+        <span class="skill-chip">Talent Solutions</span>
+        <span class="skill-chip">C-Suite Engagement</span>
+        <span class="skill-chip">Revenue Management</span>
+        <span class="skill-chip">CRM &amp; Pipeline</span>
+        <span class="skill-chip">Team Leadership</span>
+        <span class="skill-chip">Business Development</span>
+        <span class="skill-chip">Go-to-Market Strategy</span>
+        <span class="skill-chip">Lead Qualification</span>
+        <span class="skill-chip">Salesforce CRM</span>
+      </div>
+    </div>
+
+    <!-- Languages -->
+    <div class="sb">
+      <div class="sb-title" data-i18n="lang_label">Languages</div>
+      <div class="lang-row">
+        <div class="lang-left"><span style="font-size:1rem;">🇮🇹</span><span class="lang-name" data-i18n="lang_it">Italian</span></div>
+        <span class="lang-level" data-i18n="lang_it_level">Native</span>
+      </div>
+      <div class="lang-row">
+        <div class="lang-left"><span style="font-size:1rem;">🇬🇧</span><span class="lang-name" data-i18n="lang_en">English</span></div>
+        <span class="lang-level" data-i18n="lang_en_level">Full Professional</span>
+      </div>
+      <div class="lang-row">
+        <div class="lang-left"><span style="font-size:1rem;">🇪🇸</span><span class="lang-name" data-i18n="lang_es">Spanish</span></div>
+        <span class="lang-level" data-i18n="lang_es_level">Full Professional</span>
+      </div>
+    </div>
+
+    <!-- Certifications -->
+    <div class="sb">
+      <div class="sb-title" data-i18n="cert_label">Certifications</div>
+      <div class="cert-chips">
+        <span class="cert-chip">Salesforce</span>
+        <span class="cert-chip">Sell with NLP</span>
+        <span class="cert-chip">Google Ads</span>
+        <span class="cert-chip">CAM – Digital Marketing</span>
+      </div>
+    </div>
+
+
+  </aside>
+
+  <!-- ══ CHAT MAIN ══ -->
+  <main class="chat-main">
+
+    <!-- Contact bar -->
+    <div class="contact-bar">
+      <a href="mailto:matteo1789@gmail.com" class="cbar-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        matteo1789@gmail.com
+      </a>
+      <a href="tel:+3530892334107" class="cbar-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+        +353 089 233 4107
+      </a>
+      <a href="https://linkedin.com/in/grassimatteo" target="_blank" class="cbar-link">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+        linkedin.com/in/grassimatteo
+      </a>
+    </div>
+
+    <div class="chat-top">
+      <div class="chat-top-left">
+        <div class="chat-logo">🤖</div>
+        <div>
+          <div class="chat-top-title" data-i18n="chat_title">AI Interview Assistant</div>
+          <div class="chat-top-sub" data-i18n="chat_sub">Ask me anything about Matteo's experience, skills or background</div>
+        </div>
+      </div>
+      <div>
+        <div class="lang-tabs">
+          <button class="lang-tab active" id="tab-en" onclick="setLang('en')">🇬🇧 EN</button>
+          <button class="lang-tab" id="tab-it" onclick="setLang('it')">🇮🇹 IT</button>
+          <button class="lang-tab" id="tab-es" onclick="setLang('es')">🇪🇸 ES</button>
+        </div>
+        <div class="lang-hint" id="langHint">You can chat in English, Italian, or Spanish</div>
+      </div>
+    </div>
+
+    <div class="suggested-tabs" id="suggestedTabs"></div>
+
+    <div class="messages-wrap" id="chatMessages"></div>
+
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chatInput" rows="1"
+        placeholder="Ask me anything…"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,90)+'px'"></textarea>
+      <button class="chat-send" id="sendBtn" onclick="sendMessage()">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="powered">Powered by AI · Profile of Matteo Grassi</div>
+
+  </main>
+
+  <!-- Mobile tab bar -->
+  <div class="tab-bar" id="tabBar">
+    <button class="tab-btn active" onclick="switchTab('profile')" id="tbProfile">
+      <span class="ticon">👤</span>Profile
+    </button>
+    <button class="tab-btn" onclick="switchTab('chat')" id="tbChat">
+      <span class="ticon">💬</span>Chat
+    </button>
+  </div>
+
+</div>
+
+<script>
+const translations = {
+  en: {
+    title: 'Senior Account Director',
+    summary: 'Seasoned sales professional with 15+ years across digital marketing, SaaS, and B2B technology. At LinkedIn I lead high-impact transformation programs with C-level stakeholders, combining consultative selling and value-based storytelling to drive ROI.',
+    exp_label: 'Experience',
+    exp0_role: 'Senior Account Manager', exp0_period: 'Oct 2023 – Present · Dublin',
+    exp1_period: 'May – Oct 2023 · Dublin',
+    exp2_period: 'Apr 2022 – Apr 2023 · Dublin',
+    exp3_role: 'Sales Manager / AM / AE – Google Ads', exp3_period: 'Oct 2019 – Apr 2022 · Barcelona',
+    exp4_period: 'May – Oct 2019 · Barcelona',
+    exp5_period: 'Jun – Dec 2018 · Madrid',
+    exp6_role: 'BizDev Manager – Italy & S.Europe', exp6_period: 'Aug 2016 – Dec 2017 · Barcelona',
+    exp7_period: 'Oct 2015 – Jul 2016 · Milan',
+    exp8_period: 'May 2013 – Oct 2015 · Oxford',
+    exp9_period: 'Jul 2012 – Mar 2013',
+    exp10_period: 'Jul 2008 – Oct 2009',
+    exp11_period: 'Jul 2005 – Apr 2008 · Liguria',
+    music_label: '🎸 Hobby & Passion',
+    music_role: 'Lead Guitarist', music_period: 'Sep 1997 – Jul 2007 · 9 yrs 11 mo',
+    music_desc: '300+ concerts · 7 studio albums · Europe, US, Canada, Japan',
+    skills_label: 'Key Skills',
+    lang_label: 'Languages',
+    lang_it: 'Italian', lang_it_level: 'Native',
+    lang_en: 'English', lang_en_level: 'Full Professional',
+    lang_es: 'Spanish', lang_es_level: 'Full Professional',
+    cert_label: 'Certifications',
+    contact_label: 'Contact',
+    chat_title: 'AI Interview Assistant',
+    chat_sub: 'Ask me anything about Matteo\'s experience, skills or background',
+  },
+  it: {
+    title: 'Senior Account Director',
+    summary: 'Professionista delle vendite con oltre 15 anni di esperienza in digital marketing, SaaS e B2B technology. In LinkedIn guido programmi di trasformazione ad alto impatto con stakeholder C-level, combinando vendita consultiva e value-based storytelling.',
+    exp_label: 'Esperienza',
+    exp0_role: 'Senior Account Manager', exp0_period: 'Ott 2023 – Presente · Dublino',
+    exp1_period: 'Mag – Ott 2023 · Dublino',
+    exp2_period: 'Apr 2022 – Apr 2023 · Dublino',
+    exp3_role: 'Sales Manager / AM / AE – Google Ads', exp3_period: 'Ott 2019 – Apr 2022 · Barcellona',
+    exp4_period: 'Mag – Ott 2019 · Barcellona',
+    exp5_period: 'Giu – Dic 2018 · Madrid',
+    exp6_role: 'BizDev Manager – Italia & Europa Merid.', exp6_period: 'Ago 2016 – Dic 2017 · Barcellona',
+    exp7_period: 'Ott 2015 – Lug 2016 · Milano',
+    exp8_period: 'Mag 2013 – Ott 2015 · Oxford',
+    exp9_period: 'Lug 2012 – Mar 2013',
+    exp10_period: 'Lug 2008 – Ott 2009',
+    exp11_period: 'Lug 2005 – Apr 2008 · Liguria',
+    music_label: '🎸 Hobby & Passione',
+    music_role: 'Chitarrista Solista', music_period: 'Set 1997 – Lug 2007 · 9 anni 11 mesi',
+    music_desc: '300+ concerti · 7 album in studio · Europa, USA, Canada, Giappone',
+    skills_label: 'Competenze Chiave',
+    lang_label: 'Lingue',
+    lang_it: 'Italiano', lang_it_level: 'Madrelingua',
+    lang_en: 'Inglese', lang_en_level: 'Full Professional',
+    lang_es: 'Spagnolo', lang_es_level: 'Full Professional',
+    cert_label: 'Certificazioni',
+    contact_label: 'Contatti',
+    chat_title: 'AI Interview Assistant',
+    chat_sub: 'Chiedimi qualcosa sull\'esperienza, le competenze o il background di Matteo',
+  },
+  es: {
+    title: 'Director de Cuentas Senior',
+    summary: 'Profesional de ventas con más de 15 años de experiencia en marketing digital, SaaS y B2B technology. En LinkedIn lidero programas de transformación de alto impacto con stakeholders de nivel C.',
+    exp_label: 'Experiencia',
+    exp0_role: 'Senior Account Manager', exp0_period: 'Oct 2023 – Presente · Dublín',
+    exp1_period: 'May – Oct 2023 · Dublín',
+    exp2_period: 'Abr 2022 – Abr 2023 · Dublín',
+    exp3_role: 'Sales Manager / AM / AE – Google Ads', exp3_period: 'Oct 2019 – Abr 2022 · Barcelona',
+    exp4_period: 'May – Oct 2019 · Barcelona',
+    exp5_period: 'Jun – Dic 2018 · Madrid',
+    exp6_role: 'BizDev Manager – Italia & Europa del Sur', exp6_period: 'Ago 2016 – Dic 2017 · Barcelona',
+    exp7_period: 'Oct 2015 – Jul 2016 · Milán',
+    exp8_period: 'May 2013 – Oct 2015 · Oxford',
+    exp9_period: 'Jul 2012 – Mar 2013',
+    exp10_period: 'Jul 2008 – Oct 2009',
+    exp11_period: 'Jul 2005 – Abr 2008 · Liguria',
+    music_label: '🎸 Hobby y Pasión',
+    music_role: 'Guitarrista Principal', music_period: 'Sep 1997 – Jul 2007 · 9 años 11 meses',
+    music_desc: '300+ conciertos · 7 álbumes de estudio · Europa, EE.UU., Canadá, Japón',
+    skills_label: 'Habilidades Clave',
+    lang_label: 'Idiomas',
+    lang_it: 'Italiano', lang_it_level: 'Lengua materna',
+    lang_en: 'Inglés', lang_en_level: 'Full Professional',
+    lang_es: 'Español', lang_es_level: 'Full Professional',
+    cert_label: 'Certificaciones',
+    contact_label: 'Contacto',
+    chat_title: 'AI Interview Assistant',
+    chat_sub: 'Pregúntame sobre la experiencia, habilidades o trayectoria de Matteo',
+  }
+};
+
+const welcomeMsgs = {
+  en: '👋 Hi! I\'m Matteo Grassi\'s AI assistant. Ask me about his experience at LinkedIn, Salesforce, TripAdvisor, Nokia and more — or even his music career! You can chat in English, Italian, or Spanish.',
+  it: '👋 Ciao! Sono l\'assistente AI di Matteo Grassi. Puoi chiedermi della sua esperienza in LinkedIn, Salesforce, TripAdvisor, Nokia e non solo — o anche della sua carriera musicale! Parliamo in italiano, inglese o spagnolo.',
+  es: '👋 ¡Hola! Soy el asistente IA de Matteo Grassi. Puedes preguntarme sobre su experiencia en LinkedIn, Salesforce, TripAdvisor, Nokia y más — ¡o incluso sobre su carrera musical! Podemos hablar en inglés, italiano o español.'
+};
+
+const langHints = {
+  en: 'You can chat in English, Italian, or Spanish',
+  it: 'Puoi chattare in italiano, inglese o spagnolo',
+  es: 'Puedes chatear en español, inglés o italiano'
+};
+
+const suggestedQsSets = {
+  en: ['Walk me through your career', 'Why are you a good fit?', 'What\'s your value proposition?', 'Experience with complex deals?', 'How do you engage C-level?', 'Tell me a STAR story — influence', 'STAR: Users first (Salesforce)', 'STAR: Qwant deal (HotelsCombined)', 'STAR: Difficult client', 'STAR: Teamwork under pressure', 'Your strengths?', 'Your weaknesses?', 'Why are you looking to move?', 'Google Ads & digital marketing?', 'Full-funnel advertising experience?', 'AI & HR tech experience?', 'Your sales methodology?', 'Pipeline & forecasting approach?', 'How do you build relationships?', 'What are you working on to develop yourself?'],
+  it: ['Raccontami il tuo percorso', 'Perché sei adatto a questo ruolo?', 'Qual è la tua value proposition?', 'Esperienza con deal complessi?', 'Come coinvolgi il C-level?', 'STAR: Influenza stakeholder', 'STAR: Users first (Salesforce)', 'STAR: Deal Qwant (HotelsCombined)', 'STAR: Cliente difficile', 'STAR: Lavoro di squadra', 'I tuoi punti di forza?', 'Le tue aree di miglioramento?', 'Perché stai cercando un cambiamento?', 'Google Ads e digital marketing?', 'Esperienza full-funnel?', 'AI & HR tech?', 'La tua metodologia di vendita?', 'Pipeline e forecasting?', 'Come costruisci le relazioni?', 'Come ti stai sviluppando?'],
+  es: ['Cuéntame tu trayectoria', '¿Por qué eres un buen fit?', '¿Cuál es tu propuesta de valor?', '¿Experiencia en deals complejos?', '¿Cómo involucras al C-level?', 'STAR: Influencia stakeholders', 'STAR: Users first (Salesforce)', 'STAR: Deal Qwant (HotelsCombined)', 'STAR: Cliente difícil', 'STAR: Trabajo en equipo', '¿Tus fortalezas?', '¿Tus áreas de mejora?', '¿Por qué quieres cambiar?', '¿Google Ads y marketing digital?', '¿Experiencia full-funnel?', '¿IA y HR tech?', '¿Tu metodología de ventas?', '¿Pipeline y forecasting?', '¿Cómo construyes relaciones?', '¿En qué te estás desarrollando?']
+};
+
+const placeholders = { en: 'Ask me anything…', it: 'Scrivi un messaggio…', es: 'Escribe un mensaje…' };
+
+const kb = {
+  en: {
+    linkedin:     'In my current role as Senior Account Director at LinkedIn, I own a portfolio of strategic enterprise accounts across EMEA, managing the full commercial lifecycle — from executive discovery and solution design through to multi-year contract negotiation, renewal, and expansion. The core of the role is acting as a trusted transformation partner rather than a vendor: I help C-level stakeholders connect their talent strategy — hiring, learning, workforce planning — to measurable business outcomes using LinkedIn\'s suite of Talent and Learning Solutions. What makes this role complex and rewarding is the breadth of stakeholders involved: a single deal requires alignment across HR leadership, Finance, Legal, Procurement, and the C-suite, each with different priorities and success metrics. Since joining in October 2023, I\'ve built strong executive relationships across my portfolio and have consistently delivered against my revenue and expansion targets.',
+    achievement:  'Three achievements stand out across my career. At TripAdvisor I consistently hit 130% of annual sales quota across the EMEA hotel portfolio — I was recognised multiple times as best sales representative, which reflected not just volume but the quality of client relationships I was building. At Nokia in Liguria I generated over €1.7 million in cumulative annual sales from a territory I largely built from scratch, regularly winning the internal award for top sales performance. More recently at LinkedIn, the achievement I\'m most proud of is being trusted with some of the most strategically complex accounts in the EMEA portfolio — multi-year, seven-figure engagements where the commercial relationship has a genuine impact on the client\'s talent strategy. Across all of these, I\'ve been recognised as Star Performer and Salesperson of the Month at multiple companies, which I take as a reflection of consistency over time, not just one strong quarter.',
+    clevel:       'My principle with C-suite engagement is simple: executives don\'t buy products, they buy outcomes. Before any executive meeting I invest time understanding their strategic agenda — their growth targets, talent gaps, board-level priorities, competitive pressures — so that when I walk into the room I\'m leading with insight, not a product deck. In practice this means presenting relevant industry benchmarks, linking our proposal to their published strategy, and quantifying the ROI in terms that resonate with a CFO as much as a CHRO. I also multithread deliberately — building relationships across HR, Finance, Legal, and Procurement simultaneously — so that executive sponsorship is supported from multiple levels and doesn\'t collapse if a single champion changes role. This approach has allowed me to close and expand multi-year strategic contracts at LinkedIn where the first conversation happened directly at C-suite level.',
+    team:         'My most significant team leadership experience was at Teleperformance in Barcelona (2019–2022), where I managed a sales team of 13 — SDRs and Account Executives — within the Google Ads business. Beyond the day-to-day operations and KPI management, what I found most impactful was building individual development plans for each team member: some wanted to move into account management, others into sales leadership, and aligning their daily work to those goals created real engagement. I ran structured weekly one-to-ones, introduced a peer coaching programme, and redesigned the forecast preparation process to be more transparent and accurate. The team went from inconsistent performance to reliably hitting targets quarter after quarter. I also led junior teams at HotelsCombined and Ve Interactive — smaller in size, but the same philosophy: clear expectations, genuine coaching, and accountability without micromanagement.',
+    international:'My career has unfolded across four countries and four industries over 20 years, which has given me a genuinely multicultural lens on enterprise sales. I started in Italy at Nokia in Liguria, learning the discipline of field sales and quota accountability. I then moved through Spain — TripAdvisor in Barcelona, then HotelsCombined, Ryanair, and Teleperformance across Barcelona and Madrid — where I developed a deep understanding of how to sell across Southern European and EMEA markets. Since 2022 I\'ve been based in Dublin, first at Salesforce, briefly at Revolut, and now at LinkedIn. Each country brought a different commercial culture: the relationship-first approach of Mediterranean markets, the more process-driven environment of the UK, and the high-growth tech pace of Dublin\'s SaaS ecosystem. Being fluent in English, Italian, and Spanish hasn\'t just been a professional convenience — it\'s changed the quality of executive conversations, especially in markets where engaging in someone\'s first language builds trust far more quickly than any slide deck.',
+    music:        'Between 1997 and 2007 I was the Lead Guitarist of Klasse Kriminale — nearly a decade as a full-time professional musician. We performed 300+ concerts, recorded 7 studio albums, and toured across Europe, the US, Canada, and Japan, sharing stages with bands like Dropkick Murphys, Sham 69, Angelic Upstarts, Agnostic Front, Madball, and Cock Sparrer. What people don\'t always connect is how much that experience translates directly into what I do today: performing live teaches you to read a room and adapt your delivery in real time; touring internationally develops resilience and the ability to perform consistently under pressure; recording as a band is a masterclass in collaborative problem-solving with tight deadlines and high stakes. I\'m proud of that chapter — it was intense, creative, and formative — and I still play. I also think it\'s a genuine differentiator: not many enterprise sales professionals have spent the better part of a decade performing on stage across four continents.',
+    skills:       'My skill set sits at the intersection of enterprise sales, technology, and people leadership. On the commercial side, I bring deep expertise in B2B enterprise sales, strategic account management, SaaS sales cycles, and talent acquisition enablement — all built across 15+ years and four countries. On the operational side, I\'m strong in revenue forecasting, pipeline integrity, CRM governance, and deal qualification frameworks. I\'m Salesforce certified and Google Ads certified, and I hold the CAM Diploma in Digital Marketing. I\'m also certified in Sell with NLP, which underpins my consultative approach and my ability to navigate complex, multi-stakeholder buying processes. What ties all of this together is a genuine curiosity about AI and HR technology — I\'m not just selling LinkedIn products, I\'m genuinely interested in how AI is reshaping talent strategy, and that conviction comes through in every executive conversation.',
+    deals:        'Enterprise deal complexity is something I\'ve navigated at every stage of my career, but most intensively at LinkedIn. My typical deals involve cycles of 6 to 18 months, buying committees of 6 to 10 stakeholders — HR leadership, Finance, Legal, Procurement, and C-suite — and contract values that reach into seven figures over multi-year terms. My approach is methodical: I map the full decision-making unit from day one, qualify rigorously against MEDDIC-style criteria, and identify the internal champion who will carry momentum when I\'m not in the room. Critically, I build a differentiated business case for each stakeholder group — the CHRO cares about talent strategy transformation, the CFO cares about cost-per-hire and ROI, the Legal team cares about data governance and compliance — and I use executive alignment sessions to maintain momentum and surface blockers early, before they kill a deal. At Salesforce I applied the same discipline in shorter SMB cycles, and at TripAdvisor I managed complex multi-year renewal negotiations across the EMEA hotel market, where retention required genuine relationship depth, not just contract management.',
+    salesforce:   'My Salesforce experience runs on two levels. As a company: from April 2022 to April 2023 I was a Senior Account Executive in Dublin, responsible for the full sales cycle across the SMB segment — companies of 50 to 200 employees. I coordinated pre-sales, marketing, and business development resources, ran structured discovery and demo sessions, and closed new business across a competitive CRM market. What was particularly valuable was learning Salesforce\'s own internal sales culture: highly process-driven, data-disciplined, and focused on value-based selling. As a platform: I\'m Salesforce certified and use it daily at LinkedIn for pipeline management, opportunity staging, forecast preparation, and deal governance. I believe CRM discipline is genuinely a competitive advantage — the quality of your pipeline data determines the quality of your forecast and your ability to prioritise high-value opportunities over noise.',
+    digital:      'My digital marketing expertise was built during three years at Teleperformance in Barcelona (2019–2022), where I progressed through three increasingly senior roles within the Google Ads business. As Account Executive I consulted SMEs and mid-market clients across EMEA on performance marketing strategy — running campaigns across Google Search, Shopping, YouTube, and Display Network, and focusing on measurable ROI rather than just spend. As Account Manager I shifted to portfolio optimisation: analysing campaign performance data, identifying revenue growth opportunities, and training new agents. As Sales Manager I was responsible for team performance across all 13 headcount — setting KPIs, running coaching sessions, preparing weekly forecasts, and presenting performance analytics to senior stakeholders in a fast-paced, KPI-driven environment. I\'m Google Ads certified and hold the CAM Diploma in Digital Marketing from the Chartered Institute of Marketing. This background gives me a strong foundation in performance-driven selling that I carry directly into my enterprise work.',
+    hospitality:  'The hospitality and travel sector runs through a significant portion of my career, and I have genuine depth across the full value chain — from distribution and partnerships to direct B2B sales and account management. At TripAdvisor (2013–2015, Oxford and EMEA) I managed hotel accounts across Europe, initially as Account Executive selling Business Listings and then as Account Manager handling renewals, PPC consulting via TripConnect, and revenue optimisation for hotel groups. At HotelsCombined, now part of Kayak (2016–2017, Barcelona), I was Business Development Manager for Italy then Southern Europe, managing a portfolio of strategic affiliate partnerships, overseeing lead generation, brand and PR activities, and a small SEO team. At Ryanair (2018, Madrid) I was Hotel Market Manager responsible for expanding the Ryanair Rooms supply network — identifying, qualifying, and onboarding new hotel and accommodation suppliers across key destinations. Before all of this, at Sabre Hospitality Solutions (2012–2013) I managed reservations for luxury hotel chains including Peninsula Hotels, Mandarin Oriental, Rosewood, and Regent Hotels. This breadth — from luxury reservations to OTA partnerships to direct B2B hotel sales — gives me a rounded, operational understanding of how the travel industry works commercially at every level.',
+    early:        'My early career gave me something that\'s hard to teach: genuine commercial discipline built from the ground up. At Nokia in Liguria (2005–2008) I was a Regional Field Sales Account Manager responsible for the company\'s retail and B2B performance across the region — a territory I largely built from scratch. I generated over €1.7 million in cumulative annual sales, built a new client portfolio through structured prospecting and relationship management, and managed accounts through Nokia\'s ERP systems. I was frequently recognised as the top-performing sales representative in the region — not because the territory was easy, but because I worked with a level of rigour and consistency that I\'ve maintained ever since. Before Nokia, at Maersk Line (2008–2009) I worked in customer service for global key export clients, managing cargo bookings, documentation, and daily coordination with international colleagues across the supply chain. It wasn\'t a sales role, but it taught me operational precision, client reliability, and how to work effectively under pressure in a global environment.',
+    education:    'My academic background combines rigorous analytical training with practical business application. I completed a Master\'s in Economics at the Università degli Studi di Genova (1998–2005), which gave me a strong quantitative and strategic foundation. I then pursued an MBA in International Business at MIB School of Management in Trieste (2011–2012) — including an exchange at Rollins College\'s Crummer Graduate School of Business in Florida, which exposed me to American business culture and sharpened my strategic thinking in an international context. In 2015–2016 I added the CAM Diploma in Digital Marketing from the Chartered Institute of Marketing in the UK, which formalised the digital expertise I was developing in parallel through my career. On the professional certification side: Salesforce CRM, Google Ads, and Sell with NLP — the latter being perhaps the most impactful in terms of day-to-day sales practice, as it changed how I approach discovery, rapport-building, and navigating complex buying processes.',
+    ai_hr:        'AI and HR technology is the area I find most intellectually exciting in my current role. The organisations that are winning the talent war today aren\'t just the ones with the biggest budgets — they\'re the ones using AI to make smarter decisions faster: AI-assisted sourcing that surfaces candidates based on skills rather than job titles, personalised learning pathways that reduce time-to-productivity, and workforce analytics that allow CHROs to plan ahead rather than react. At LinkedIn, I work with enterprise clients to help them build future-ready talent strategies that leverage these capabilities — not as a product sale, but as a genuine transformation conversation. I stay closely connected to LinkedIn\'s AI product roadmap and use industry benchmarking data to contextualise the conversation for different stakeholders: the CHRO thinking about skills strategy, the TA leader focused on time-to-hire, the CFO concerned with talent cost optimisation. I believe the companies that invest seriously in AI-powered talent intelligence over the next two to three years will have a structural competitive advantage that\'s very hard to reverse.',
+    methodology:  'My sales methodology has been shaped by 15 years of experience and a deliberate investment in how I sell — not just what I sell. The foundation is consultative selling: I don\'t lead with products, I lead with problems. My discovery process is designed to surface the real strategic pain — not just the surface-level requirements — so that the solution I propose is genuinely differentiated from a competitor who only heard the RFP. I\'m certified in NLP (Neuro-Linguistic Programming) for sales, which has given me a refined toolkit for building rapport quickly, reframing objections without friction, and understanding buying psychology at a level most salespeople never reach. My value-based storytelling approach means every proposal is anchored in the client\'s own language, metrics, and strategic priorities — not generic ROI templates. And my multithreading discipline ensures that progress never depends on a single relationship: I build champions at multiple levels, so that when a key contact goes on leave or changes role, the deal keeps moving. The combination of these — consultative discovery, NLP-informed communication, and structural deal governance — is what allows me to navigate 12-month enterprise sales cycles without losing momentum.',
+    forecasting:  'Pipeline integrity is, in my view, one of the clearest markers of a mature sales professional. I maintain a rigorous qualification framework at every stage — using MEDDIC-style criteria to ensure that every opportunity I commit to the forecast is genuinely progressing, not just occupying pipeline space. I update Salesforce daily, flag risks proactively rather than hoping they resolve themselves, and prepare structured weekly forecasts that clearly distinguish between committed revenue, upside, and pipeline at risk. When I was Sales Manager at Teleperformance, I had to build this culture across a team of 13 — which meant establishing a shared language around deal qualification, creating coaching routines around CRM hygiene, and teaching people that an honest forecast is more valuable to the business than an optimistic one. The outcome was that management trusted our numbers. At LinkedIn I apply the same discipline personally: my forecasts are reliable, and that reliability has earned me the latitude to manage my accounts with significant autonomy.',
+    motivation:   'What keeps me energised in enterprise sales — after 15 years — is a combination that I think is relatively rare: intellectual complexity and genuine human impact in the same role. Every large deal is a multi-dimensional puzzle: understanding a company\'s strategy well enough to design a solution that creates real change, navigating a buying committee where each person has different motivations, and ultimately earning the trust of senior leaders who are putting their credibility behind your recommendation. The intellectual challenge alone would be enough — but what makes it sustainable long-term is that at LinkedIn, I can look a CHRO in the eye and say with full conviction that the platform will help their organisation find better talent and develop their people more effectively. That alignment between what I sell and what I genuinely believe in is rare, and I don\'t take it for granted. Beyond the role itself, I\'m motivated by continuous growth — staying at the frontier of AI, talent strategy, and enterprise sales practice — and by the opportunity to mentor people who are earlier in their journey.',
+    fit:          'I believe I\'m a strong fit for senior enterprise digital advertising roles because I sit at an unusual intersection: strategic consulting experience, performance marketing depth, and enterprise account management — all built across international markets and complex multi-stakeholder buying processes. In my current role at LinkedIn I work with top European advertisers, leading multi-year initiatives that combine strategic advisory, full-funnel activation, and cross-functional collaboration with C-level stakeholders. What differentiates me is the ability to marry a genuinely consultative approach — understanding the client\'s business deeply before proposing solutions — with a strong commercial focus on measurable, data-driven outcomes. And what I\'m always looking to develop further is my depth in specific advertising products, my ability to influence go-to-market strategy at a platform level, and the opportunity to collaborate with some of the best talent in the industry in a highly innovative environment.',
+    value_prop:   'My value proposition is straightforward: I\'m not just an account manager — I\'m a growth partner. I bring a rare combination of international experience across complex enterprise environments, genuine depth in digital advertising ecosystems — performance, brand, and full-funnel — and a strategic yet highly hands-on approach. I\'ve worked with some of the largest advertisers in EMEA, helping them scale their digital strategies not just through performance tactics, but through a genuine full-funnel vision that connects brand investment to measurable commercial outcomes. I speak the client\'s language — literally in three languages, and commercially because I understand what drives ROI at enterprise scale. I bring structure, empathy, accountability, and a trusted advisor mindset. And I do it with the humility of someone who knows every client is different, and every engagement is an opportunity to learn. I\'m not someone who manages accounts — I move them forward.',
+    career_story: 'I\'d describe my career as moving across three areas that all connect: digital ecosystems, SaaS sales, and enterprise account management. I started in more traditional roles — Nokia, Maersk — where I learned the fundamentals of structured sales and managing complex customer relationships. At Nokia in Liguria I was managing €1.4M in annual revenue across a large number of accounts — it was face-to-face, high-volume, relationship-driven. I learned body language, trust-building, and what it means to be accountable for a territory. Then travel and hospitality — TripAdvisor, Sabre, HotelsCombined. TripAdvisor is where things got commercially serious: $320k target, $420k delivered, 167% attainment, 15 deals a month. An internal promotion. HotelsCombined gave me platform economics — affiliate models, distribution networks, ecosystem thinking. From there, Google Ads at Teleperformance: $750k in new business annually against a $570k target, 135% over quota, eventually managing a team of 12 and a book of 120 accounts worth $4M. Then Salesforce — the discipline side: structured discovery, MEDDIC, pipeline governance. And now LinkedIn, where I put everything together — strategic enterprise accounts, C-level transformation programs, and the full complexity of a long-cycle, multi-stakeholder deal. What ties it all together is that I\'ve always worked at the intersection of platforms and complex sales — and that\'s where I do my best work.',
+    metrics:      'Here are the concrete numbers across my career. Nokia: €1.4M managed in Liguria — top performer among Lombardia reps. TripAdvisor: $320k annual target, $420k delivered — 167% attainment. 15 deals per month at an average of $24k each. Internal promotion. Google Ads at Teleperformance: $570k quota, $750k in new business — 135% over target. Promoted to Account Manager (115% attainment), then Sales Manager with a team of 12 and a book of 120 accounts worth $4M. HotelsCombined: grew market revenue by $0.5M+ per year. Salesforce: $1.4M book across 70 accounts, $600k new business quota. LinkedIn: current role managing a portfolio of mid-market and enterprise EMEA accounts with multi-year contract value. These numbers reflect not just individual performance but consistency — I\'ve overachieved targets and KPIs across every company where they were clearly defined.',
+    star_influence:'Here\'s a STAR example of influencing stakeholders through a significant strategic shift. A large enterprise client in the education sector was investing heavily in advertising but relying almost exclusively on low-funnel formats — Lead Gen — with consistently declining results. Decision-makers were highly resistant to change, fixated on immediate ROI metrics. My task was to convince them to invest in upper-funnel and branded content — a fundamental shift in budget allocation and strategic mindset. I built a data-driven narrative combining internal performance data, industry benchmarks from comparable verticals, and a relevant EMEA case study that specifically addressed the "this won\'t work in our industry" objection. I brought the client\'s central marketing team into a strategic workshop — shifting the conversation from account review to genuine co-creation — and partnered internally with the Insights team to produce a tailored report supporting the recommendation. Result: we repositioned the entire strategy to a full-funnel approach, investment increased by 35%, and we secured a three-year budget plan with stable allocation. I became the direct point of contact for the CMO on all future media decisions. The lesson: the most impactful stakeholder conversations happen when you change the framing entirely, not just the data.',
+    star_launch:  'A STAR example of cross-functional stakeholder alignment: We needed to launch a new advertising solution — a Conversion API implementation — but the go-to-market strategy was fragmented across Sales, Product, and Marketing, with no alignment on priorities or success metrics. As a senior account lead, I took the initiative to bridge the gap rather than waiting for alignment from above. I organised a structured kickoff with all key stakeholders, built an operational plan with clear owners, deliverables, and deadlines, and used my internal credibility to move the conversation past internal politics and into execution. The solution launched in beta with five pilot clients and delivered measurable initial results within the first month. The approach was subsequently adopted as a best practice by the EMEA team. The lesson: when cross-functional alignment breaks down, someone has to create the structure — and that person doesn\'t always need formal authority to make it happen.',
+    star_users:   'One of the stories that best represents how I approach client relationships happened at Salesforce. I was managing an SMB client evaluating Enterprise licenses — which would have generated a significant commission for me. During discovery, I realised their actual use cases didn\'t justify the Enterprise tier. Professional licenses and a partner connector were more than enough to cover their needs. I proactively recommended Professional over Enterprise, walked them through exactly why, quantified how much they\'d save, and took the hit on my own commission — knowing clearly it wasn\'t in my short-term interest. The client adopted the solution smoothly, the implementation worked precisely as promised, and they trusted me completely as an advisor from that point on. When I eventually left Salesforce, they reached out personally to find out where I\'d gone and how they could still work with me. That\'s the strongest signal of trust a client can give you — and it confirmed something I believe deeply: doing the right thing for the user isn\'t in conflict with long-term commercial results. It\'s exactly how you build them.',
+    star_results: 'My most complex deal — and the one I\'m most proud of — happened at HotelsCombined in Barcelona. I identified Qwant — the French privacy-first search engine and European alternative to Google — as a strategic opportunity for our hotel affiliate programme. There was no existing relationship, no inbound interest. It started with a single outbound message on LinkedIn. Over nine months, I mapped the full decision-making structure across Qwant\'s tech, legal, product, and partnerships teams, coordinated internal teams at HotelsCombined and external integration partners, and made multiple trips to Paris to build the relationship and align all parties — without speaking a word of French. The outcome was a tiered affiliate agreement where Qwant would earn up to 90% revenue share on hotel bookings through their platform, targeting €2.5M in monthly booking volume — roughly 10,000 bookings per month at an average ticket of €250, translating to over €2.7M per year for Qwant at full scale. The integration was later paused due to Qwant\'s position on cookies and data tracking — entirely consistent with their privacy-first identity, not a reflection of the partnership. For me, it remains the deal I\'m most proud of: built from zero, fully self-driven, managed end-to-end across multiple languages and organisations. Cherry on the cake — I don\'t speak French.',
+    star_difficult:'STAR example — handling a difficult inherited client situation. I took over a large client who had just completed an integration of a solution that had been, frankly, mis-sold. The client\'s CEO was furious — there was shouting in the first call, accusations of being unprofessional and misleading. Rather than being defensive, I invested time in properly understanding the situation: I analysed all historical deal documentation, spoke with the partner to understand their perspective, and went back to the client to understand precisely what they had expected versus what they received. I concluded the client was partly right. I organised an internal briefing and proposed a step-by-step remediation plan — not a perfect fix, but a structured response that partially delivered on the original promise while the product roadmap caught up. The client didn\'t cancel. We retained the subscription and actually closed an upgraded solution at a discount — a net revenue increase despite the crisis. And I converted an angry CEO into a reference contact. What I took from it: inheriting accounts requires twice the attention of new business. And when something goes wrong, the response is more memorable than the problem. I turned that experience into a brief product education deck for all AEs in the team, so others could avoid the same mis-selling situation.',
+    star_multithreading: 'STAR — Multithreading and champion building at Salesforce. Early in my time at Salesforce, I encountered the concept of the "champion" for the first time — identifying and nurturing an internal advocate within the client organisation who carries momentum when you\'re not in the room. It was completely new to me, and immediately compelling. I started applying it to a new deal where the client was concerned about CRM implementation across service, marketing, and operations. Instead of going only through formal channels — official meetings, email threads — I began building direct informal relationships with the Marketing Manager and Customer Service Manager. I used those conversations to understand their specific priorities and tailor a customised demo around their actual needs, while also getting informal clarity on their budget range and timeline — information that never surfaces in official meetings. We signed the deal with an unusually strong sense of mutual commitment on both sides. What I learned: going "off-road" in a deal — building genuine relationships at multiple levels — doesn\'t just accelerate the close. It fundamentally changes the quality of the partnership that follows.',
+    star_proactive:'STAR — Proactive initiative. While working as Account Manager in the Google Ads programme at Teleperformance, I noticed a gap: there was no structured framework for how to properly audit a client\'s account from start to finish. Colleagues had their own methods, I had mine, but there was no common standard. I started reading books on performance marketing and PPC analysis, combined what I was learning with what we were trained to do internally, and built a simple step-by-step account audit guide — a presentation I shared informally with my immediate colleagues. My manager saw it and proposed that I apply for an internal specialist role, running office hours to help colleagues with account analysis questions — for both new starters and experienced account managers. I was selected. The guide became part of the onboarding material. What I took from it: a company\'s brand doesn\'t guarantee its internal processes are optimised. There\'s always room to build something better, and doing so proactively — without being asked — is often the fastest path to growth.',
+    star_teamwork: 'STAR — Teamwork under pressure. At Ryanair, on the last day of Q2 — a critical day for team bonuses and quarterly targets — a storm hit and the office internet went down completely. Three contracts still needed uploading and two hotels needed to go live on the Extranet to close the quarter. Two colleagues were just short of their individual targets. I had already hit mine. I called my wife, confirmed we still had internet at home — which was nearby — and immediately volunteered to go there with my two colleagues. We uploaded the missing contracts, put the hotels live, and spent two more hours on the phone to Eastern Europe to get the remaining signatures via online link. We closed the quarter, hit the team target, and both colleagues reached their individual bonuses. I could have left at 5pm. Instead I stayed because the team\'s result mattered to me as much as my own. I think that says something about how I see collaboration — it\'s not transactional.',
+    strength:     'My core strengths, as I see them and as I\'ve received consistent feedback on. Honesty: this is the foundation of how I operate — with clients, colleagues, and in how I represent myself. I believe trust is the most valuable commercial asset you can build. Positivity: I genuinely approach difficult situations with a belief that a positive outcome is achievable — it\'s not naivety, it\'s commitment. Supportive: the feedback I\'ve received most consistently throughout my career is that I\'m the person people turn to when they need help — I show up for colleagues, I mentor where I can, and I treat everyone\'s problems as worth taking seriously. Curiosity and growth: I\'m always learning — I read widely across business, sales methodology, and adjacent fields. My last personal achievement: I started learning drums. My third half-marathon was in Valencia last October. I believe the same mindset that makes you run 21km makes you a better salesperson. Dedication: when I commit to something, I finish it — clients, targets, side projects. That\'s not a boast, it\'s just how I\'m wired.',
+    weakness:     'On areas for development: I can be too self-critical — I\'m always looking for more, and sometimes I forget to pause and celebrate the small wins that compound into the big ones. I\'m also someone who naturally wants to make everyone happy, which in a sales context can occasionally lead me to over-invest in relationships that don\'t have enough commercial potential. I\'m more aware of both now than I used to be — I\'ve learned to be more selective about where I direct my energy, and to build in moments of reflection and recognition rather than always pushing to the next challenge. I\'m also continuously developing my influence skills in complex, multi-stakeholder environments — it\'s something I\'ve invested in deliberately through NLP training and books like The Challenger Sale.',
+    why_move:     'I\'ve had a genuinely positive experience at LinkedIn — particularly in developing strategic thinking, building C-suite relationships, and working on multi-year enterprise transformation programs. What I\'m looking for now is a chance to get closer to digital advertising performance and measurable campaign impact — the direct connection between a strategic recommendation and a quantifiable commercial outcome. Earlier in my career, working with Google Ads at Teleperformance, that performance-driven environment was deeply motivating: you could see the direct impact of a strategic recommendation in the campaign data in real time. I want to bring the enterprise relationship depth and consultative approach I\'ve built at LinkedIn back into an environment where performance is at the centre. I\'m also looking for a company that values customer relationships, work-life balance, and where I can join a strong team and have a positive impact on both clients and colleagues. That\'s what\'s driving the move — toward a role that combines the best of strategic advisory and performance marketing at scale.',
+    full_funnel:  'My full-funnel advertising experience comes from multiple angles. At Teleperformance I worked directly with the full Google Ads suite — Search, Shopping, YouTube, and Display — helping SME and mid-market clients across EMEA build integrated campaigns. At HotelsCombined I worked on platform and affiliate economics — understanding how upper-funnel awareness activity drives lower-funnel conversion in a marketplace model. At TripAdvisor I consulted hotel clients on PPC strategy through TripConnect, managing the tension between brand investment and direct performance. At LinkedIn I help enterprise clients make the case for talent brand investment alongside performance-focused Recruiter and Jobs products — which requires the same full-funnel framing. The through-line: the most effective advertising connects brand, consideration, and conversion into a single coherent narrative — and the most impactful advisory conversations happen when you help a client see their funnel as a system, not a collection of isolated formats.',
+    vertical:     'I\'ve worked across multiple verticals throughout my career, which has built my ability to move between industries quickly and identify the commercial levers that matter in each context. In hospitality and travel — TripAdvisor, HotelsCombined, Ryanair, Sabre, Booking.com — I developed deep sector knowledge and strong relationships across operators of all sizes. In tech and SaaS — Salesforce, LinkedIn, Revolut — I managed complex enterprise cycles with long buying committees and multi-year commitments. In digital advertising — Google Ads at Teleperformance — I worked across retail, FMCG, education, finance, and B2B technology. In fintech — Revolut — I got early exposure to how financial products embed into customer journeys at scale. What I\'ve found is that the fundamentals of strategic account management translate across industries more than people expect: the sector changes; the way you earn trust, build a business case, and navigate a complex buying committee doesn\'t.',
+    development:  'I invest deliberately in my own development. On the reading side: I\'m a fan of Sean Ellis on growth marketing, and Matthew Dixon\'s The Challenger Sale changed how I think about leading with insight in sales conversations. I consistently look for courses and frameworks that extend my ability to influence in complex, multi-stakeholder environments — before my last transition, I was already exploring leadership and influence programmes. On the personal side: I run half-marathons — Valencia last October was my third. I\'ve recently started learning drums. I find that the discipline of physical training directly translates into how I approach professional challenges: consistency over intensity, small wins compounding into large ones. I also make a point of learning from my son — specifically, how he simplifies complex concepts for communication. It\'s taught me to rephrase and reframe from the perspective of the listener, which is one of the most underrated skills in sales.',
+    relationship: 'For internal stakeholders, I invest in genuine relationships — not just operational ones. I interact regularly with marketing, solution engineering, and insights teams to share client feedback, align on best practices, and create shared assets like case studies and content that serve both teams. I make a point of being available and useful to newer colleagues — whether that\'s an informal intro meeting, sharing a deal structure, or offering to co-present in a client call. For external stakeholders — clients, partners — I believe in being present. That means responding quickly, showing up when it\'s not required, and initiating contact with ideas and insights rather than always waiting for a reason. With partners specifically, I\'ve built strong collaborative rhythms: joint email campaigns, shared webinars, co-created customer success stories. The principle is simple: people buy from people they trust, and trust is built through consistency of presence and intention over time.',
+    contact:      'You can reach Matteo at matteo1789@gmail.com, call +353 089 233 4107, or connect on LinkedIn: linkedin.com/in/grassimatteo.',
+    default:      'Great question — I can go deep on any aspect of Matteo\'s background: his current LinkedIn role, enterprise deal experience, C-level engagement approach, team leadership, Google Ads and digital marketing, hospitality sector, Nokia early career, MBA, sales methodology, AI & HR tech — or his personal STAR stories, strengths, career narrative, and what motivates him. What would you like to explore?'
+  },
+  it: {
+    linkedin:     'Nel mio ruolo attuale di Senior Account Director in LinkedIn gestisco un portfolio di account enterprise strategici in EMEA, occupandomi dell\'intero ciclo commerciale — dalla scoperta executive e progettazione della soluzione fino alla negoziazione di contratti pluriennali, rinnovo ed espansione. Il cuore del ruolo è agire come partner di trasformazione, non come fornitore: aiuto i responsabili C-level a collegare la loro strategia del talento — assunzione, formazione, workforce planning — a risultati di business misurabili, tramite la suite LinkedIn di Talent e Learning Solutions. La complessità e la soddisfazione di questo ruolo derivano dall\'ampiezza degli stakeholder coinvolti: un singolo deal richiede l\'allineamento di HR leadership, Finance, Legal, Procurement e C-suite, ciascuno con priorità e metriche di successo diverse. Da ottobre 2023 ho costruito relazioni executive solide nel mio portfolio e ho raggiunto costantemente gli obiettivi di revenue e di espansione.',
+    achievement:  'Tre risultati emergono su tutti nella mia carriera. In TripAdvisor ho raggiunto costantemente il 130% del quota annuale sul portfolio hotel EMEA — riconosciuto più volte come miglior sales representative, a riflesso non solo del volume ma della profondità delle relazioni costruite con i clienti. In Nokia in Liguria ho generato oltre €1,7 milioni di vendite cumulative annue da un territorio che ho costruito in gran parte da zero, vincendo regolarmente il premio interno per la performance commerciale. Più di recente in LinkedIn, il risultato di cui sono più orgoglioso è la fiducia ricevuta nella gestione di alcuni degli account più complessi sul piano strategico nel portfolio EMEA — impegni pluriennali a sette cifre in cui la relazione commerciale ha un impatto reale sulla strategia del talento del cliente. Ho anche ricevuto il riconoscimento di Star Performer e Salesperson of the Month in più aziende: lo interpreto come una riflessione di coerenza nel tempo, non di un singolo trimestre brillante.',
+    clevel:       'Il mio principio nell\'engagement C-suite è semplice: i dirigenti non comprano prodotti, comprano risultati. Prima di ogni incontro executive investo tempo per comprendere l\'agenda strategica — gli obiettivi di crescita, i gap di talento, le priorità del board, le pressioni competitive — così da entrare in sala con insight, non con un mazzo di slide sul prodotto. In pratica significa presentare benchmark di settore rilevanti, collegare la nostra proposta alla strategia pubblicata dall\'azienda e quantificare il ROI in termini che risuonino con un CFO tanto quanto con un CHRO. Opero anche in multithreading deliberato — costruendo relazioni parallele con HR, Finance, Legal e Procurement — così che il supporto executive sia rafforzato da più livelli e non crolli se un singolo champion cambia ruolo. Questo approccio mi ha permesso di chiudere ed espandere contratti strategici pluriennali in LinkedIn dove la prima conversazione è avvenuta direttamente a livello di C-suite.',
+    team:         'La mia esperienza di leadership più significativa è stata in Teleperformance a Barcellona (2019–2022), dove ho gestito un team di vendita di 13 persone — SDR e Account Executive — nel business Google Ads. Oltre alle operazioni quotidiane e alla gestione dei KPI, ciò che ho trovato più impattante è stato costruire piani di sviluppo individuali per ciascun membro del team: alcuni volevano crescere nell\'account management, altri nella sales leadership, e allineare il loro lavoro quotidiano a quegli obiettivi ha generato un coinvolgimento reale. Ho introdotto sessioni di coaching strutturate settimanali, un programma di peer coaching, e ridisegnato il processo di forecast per renderlo più trasparente e accurato. Il team è passato da performance incostanti a raggiungere gli obiettivi in modo affidabile trimestre dopo trimestre. Ho guidato team junior anche in HotelsCombined e Ve Interactive — più piccoli per dimensioni, ma con la stessa filosofia: aspettative chiare, coaching autentico e accountability senza micromanagement.',
+    international:'La mia carriera si è sviluppata in quattro Paesi e quattro settori in 20 anni, il che mi ha dato una prospettiva genuinamente multiculturale sulle vendite enterprise. Ho iniziato in Italia con Nokia in Liguria, imparando la disciplina del field sales e la responsabilità sul territorio. Poi mi sono spostato in Spagna — TripAdvisor a Barcellona, poi HotelsCombined, Ryanair e Teleperformance tra Barcellona e Madrid — dove ho sviluppato una comprensione profonda di come vendere nei mercati dell\'Europa meridionale e dell\'EMEA. Dal 2022 sono basato a Dublino, prima in Salesforce, brevemente in Revolut, e ora in LinkedIn. Ogni Paese ha portato una cultura commerciale diversa: l\'approccio relationship-first dei mercati mediterranei, lo stile più process-driven del Nord Europa, il ritmo ad alta crescita dell\'ecosistema SaaS di Dublino. Parlare fluentemente inglese, italiano e spagnolo non è stata solo una comodità professionale — ha cambiato la qualità delle conversazioni executive, specialmente nei mercati dove coinvolgere qualcuno nella propria lingua costruisce fiducia molto più velocemente di qualsiasi presentazione.',
+    music:        'Tra il 1997 e il 2007 sono stato il chitarrista solista dei Klasse Kriminale — quasi un decennio come musicista professionista a tempo pieno. Abbiamo suonato in oltre 300 concerti, registrato 7 album in studio e girato in lungo e in largo attraverso Europa, USA, Canada e Giappone, condividendo il palco con band come Dropkick Murphys, Sham 69, Angelic Upstarts, Agnostic Front, Madball e Cock Sparrer. Quello che le persone non sempre collegano è quanto quell\'esperienza si traduca direttamente in quello che faccio oggi: suonare dal vivo insegna a leggere un pubblico e adattare la propria performance in tempo reale; fare tour a livello internazionale sviluppa la resilienza e la capacità di performare con costanza sotto pressione; registrare un album in squadra è una masterclass in problem-solving collaborativo con scadenze strette e alto profilo. Sono orgoglioso di quel capitolo — è stato intenso, creativo, formativo — e suono ancora. Penso anche che sia un differenziatore genuino: non molti professionisti delle vendite enterprise hanno trascorso quasi un decennio esibirsi su palchi in quattro continenti.',
+    skills:       'Il mio set di competenze si trova all\'intersezione di vendite enterprise, tecnologia e leadership. Sul lato commerciale: B2B Enterprise Sales, Strategic Account Management, SaaS Sales, Talent Acquisition Enablement ed Executive Stakeholder Engagement — costruiti in 15+ anni e quattro Paesi. Sul lato operativo: Revenue Forecasting, Pipeline Integrity, Deal Governance e CRM management (certificato Salesforce). Ho anche una solida base nel Digital Marketing (certificato Google Ads, CAM Diploma) e una competenza crescente in AI & HR Tech attraverso il mio lavoro in LinkedIn. Sono certificato in Sell with NLP, che è alla base del mio approccio consultivo e della mia capacità di navigare processi di acquisto multi-stakeholder complessi. Ciò che lega tutto questo insieme è una curiosità genuina per la tecnologia AI e per il futuro del talento — non sto solo vendendo prodotti LinkedIn, credo davvero nel valore di ciò che porto ai clienti.',
+    deals:        'La complessità dei deal enterprise è qualcosa che ho navigato in ogni fase della mia carriera, ma in modo più intenso in LinkedIn. I miei deal tipici coinvolgono cicli di vendita da 6 a 18 mesi, buying committee da 6 a 10 stakeholder — HR leadership, Finance, Legal, Procurement, C-suite — e valori contrattuali che raggiungono le sette cifre su termini pluriennali. Il mio approccio è metodico: mappo l\'intera unità decisionale dal primo giorno, mi qualiffico rigorosamente con criteri MEDDIC-style e identifico il champion interno che porterà avanti il momentum quando non sono in sala. Costruisco un business case differenziato per ogni gruppo di stakeholder — il CHRO si preoccupa della trasformazione della strategia del talento, il CFO del ROI e del cost-per-hire, il Legal della data governance e della compliance — e uso sessioni di allineamento executive per mantenere lo slancio e identificare i blocchi prima che uccidano il deal. In Salesforce ho applicato la stessa disciplina in cicli SMB più brevi, e in TripAdvisor ho gestito negoziazioni di rinnovo complesse nel mercato alberghiero EMEA, dove la retention richiedeva profondità di relazione autentica, non semplice gestione contrattuale.',
+    salesforce:   'La mia esperienza con Salesforce si articola su due livelli. Come azienda: da aprile 2022 ad aprile 2023 sono stato Senior Account Executive a Dublino, responsabile del ciclo di vendita completo nel segmento SMB — aziende da 50 a 200 dipendenti. Coordinavo pre-sales, marketing e business development, conducevo sessioni di discovery strutturate e chiudevo nuovo business in un mercato CRM competitivo. Quello che è stato particolarmente prezioso è stato imparare la cultura di vendita interna di Salesforce: altamente process-driven, orientata alla data discipline e al value-based selling. Come piattaforma: sono certificato Salesforce e lo utilizzo quotidianamente in LinkedIn per pipeline management, opportunity staging, preparazione del forecast e deal governance. Credo che la CRM discipline sia un vantaggio competitivo reale — la qualità dei dati nel tuo pipeline determina la qualità del tuo forecast e la tua capacità di prioritizzare le opportunità ad alto valore.',
+    digital:      'La mia competenza in digital marketing si è costruita durante tre anni in Teleperformance a Barcellona (2019–2022), dove ho progressato attraverso tre ruoli di crescente responsabilità nel business Google Ads. Come Account Executive ho consultato clienti PMI e mid-market in EMEA sulla strategia di performance marketing — gestendo campagne su Google Search, Shopping, YouTube e Display Network con focus su ROI misurabile. Come Account Manager mi sono spostato sull\'ottimizzazione del portfolio: analizzando i dati di performance delle campagne, identificando opportunità di crescita dei ricavi e formando nuovi agenti. Come Sales Manager ero responsabile della performance del team su 13 persone — impostazione KPI, sessioni di coaching, preparazione di forecast settimanali e presentazione di analytics agli stakeholder senior in un ambiente ad alta intensità. Sono certificato Google Ads e ho conseguito il CAM Diploma in Digital Marketing presso il Chartered Institute of Marketing.',
+    hospitality:  'Il settore hospitality e travel percorre una porzione significativa della mia carriera, con una profondità genuina lungo l\'intera catena del valore. In TripAdvisor (2013–2015, Oxford ed EMEA) ho gestito account hotel in Europa, prima come Account Executive vendendo Business Listings e poi come Account Manager occupandomi di rinnovi, consulenza PPC via TripConnect e ottimizzazione dei ricavi per gruppi alberghieri. In HotelsCombined, ora parte di Kayak (2016–2017, Barcellona), ero Business Development Manager per Italia poi per l\'Europa meridionale, gestendo un portfolio di partnership affiliate strategiche, attività di lead generation, brand e PR e un piccolo team SEO. In Ryanair (2018, Madrid) ero Hotel Market Manager responsabile dell\'espansione della rete di supply di Ryanair Rooms — identificando, qualificando e onboardando nuovi fornitori alberghieri. In Sabre Hospitality Solutions (2012–2013) ho gestito prenotazioni per catene di lusso tra cui Peninsula Hotels, Mandarin Oriental, Rosewood e Regent Hotels. Questa ampiezza — dalle prenotazioni di lusso alle partnership OTA alle vendite B2B dirette — mi dà una comprensione operativa a tutto tondo di come il settore travel funziona commercialmente a ogni livello.',
+    early:        'La mia carriera iniziale mi ha dato qualcosa di difficile da insegnare: una vera disciplina commerciale costruita dal basso. In Nokia in Liguria (2005–2008) ero Regional Field Sales Account Manager responsabile della performance retail e B2B dell\'azienda in tutta la regione — un territorio che ho costruito in gran parte da zero. Ho generato oltre €1,7 milioni di vendite cumulative annue, costruito un nuovo portfolio clienti attraverso prospecting strutturato e gestione delle relazioni, e gestito account tramite i sistemi ERP Nokia. Ero frequentemente riconosciuto come il sales representative con le migliori performance nella regione — non perché il territorio fosse facile, ma perché operavo con un livello di rigore e consistenza che ho mantenuto da allora. Prima di Nokia, in Maersk Line (2008–2009) ho lavorato nel customer service per clienti globali chiave dell\'export, gestendo prenotazioni cargo, documentazione e coordinamento quotidiano con colleghi internazionali lungo la supply chain. Non era un ruolo commerciale, ma mi ha insegnato precisione operativa, affidabilità nel rapporto con i clienti e la capacità di lavorare efficacemente sotto pressione in un ambiente globale.',
+    education:    'Il mio percorso accademico combina formazione analitica rigorosa con applicazione pratica nel business. Ho conseguito la Laurea Magistrale in Economia all\'Università degli Studi di Genova (1998–2005), che mi ha fornito una solida base quantitativa e strategica. Ho poi conseguito un MBA in International Business al MIB School of Management di Trieste (2011–2012) — comprensivo di un programma di scambio al Rollins College\'s Crummer Graduate School of Business in Florida, che mi ha esposto alla cultura del business americano e affinato il pensiero strategico in un contesto internazionale. Nel 2015–2016 ho aggiunto il CAM Diploma in Digital Marketing presso il Chartered Institute of Marketing in UK, che ha formalizzato la competenza digitale che stavo sviluppando in parallelo nella mia carriera. Sul fronte delle certificazioni professionali: Salesforce CRM, Google Ads e Sell with NLP — quest\'ultima è forse quella che ha avuto il maggiore impatto pratico quotidiano, poiché ha cambiato il mio approccio alla discovery, al rapport-building e alla navigazione di processi di acquisto complessi.',
+    ai_hr:        'L\'AI e la tecnologia HR è l\'area che trovo intellettualmente più stimolante nel mio ruolo attuale. Le organizzazioni che stanno vincendo la guerra per i talenti oggi non sono solo quelle con i budget più grandi — sono quelle che usano l\'AI per prendere decisioni più intelligenti più velocemente: sourcing assistito dall\'AI che identifica candidati in base alle competenze piuttosto che ai titoli di lavoro, percorsi di apprendimento personalizzati che riducono il time-to-productivity, e workforce analytics che consentono ai CHRO di pianificare in anticipo piuttosto che reagire. In LinkedIn lavoro con clienti enterprise per aiutarli a costruire strategie del talento a prova di futuro che sfruttano queste capacità — non come vendita di prodotto, ma come conversazione di trasformazione genuina. Rimango vicino alla roadmap di prodotto AI di LinkedIn e utilizzo dati di benchmark settoriale per contestualizzare la conversazione per diversi stakeholder: il CHRO che pensa alla strategia delle competenze, il responsabile TA focalizzato sul time-to-hire, il CFO preoccupato dell\'ottimizzazione dei costi del talento.',
+    methodology:  'La mia metodologia di vendita è stata plasmata da 15 anni di esperienza e da un investimento deliberato su come vendo — non solo su cosa vendo. Il fondamento è la vendita consultiva: non inizio con i prodotti, inizio con i problemi. Il mio processo di discovery è progettato per portare alla luce il vero dolore strategico — non solo i requisiti di superficie — così che la soluzione che propongo sia genuinamente differenziata rispetto a un competitor che ha sentito solo la RFP. Sono certificato in NLP (Programmazione Neuro-Linguistica) per le vendite, il che mi ha fornito strumenti raffinati per costruire rapport rapidamente, riformulare le obiezioni senza frizione e comprendere la psicologia dell\'acquisto a un livello che la maggior parte dei venditori non raggiunge mai. Il mio approccio di value-based storytelling significa che ogni proposta è ancorata al linguaggio, alle metriche e alle priorità strategiche del cliente — non a template ROI generici. E la mia disciplina di multithreading assicura che il progresso non dipenda mai da una singola relazione: costruisco champion a più livelli, così che quando un contatto chiave va in ferie o cambia ruolo, il deal continua ad avanzare.',
+    forecasting:  'L\'integrità del pipeline è, secondo me, uno degli indicatori più chiari di un professionista delle vendite maturo. Mantengo un framework di qualificazione rigoroso in ogni fase — usando criteri in stile MEDDIC per assicurarmi che ogni opportunità che impegno nel forecast stia davvero progredendo, e non stia semplicemente occupando spazio nel pipeline. Aggiorno Salesforce quotidianamente, segnalo i rischi proattivamente piuttosto che sperare che si risolvano da soli, e preparo forecast settimanali strutturati che distinguono chiaramente tra revenue committed, upside e pipeline a rischio. Quando ero Sales Manager in Teleperformance, ho dovuto costruire questa cultura in un team di 13 persone — il che ha significato stabilire un linguaggio condiviso sulla qualificazione dei deal, creare routine di coaching sulla CRM hygiene e insegnare alle persone che un forecast onesto vale di più per il business di uno ottimistico. Il risultato è stato che il management si fidava dei nostri numeri.',
+    motivation:   'Ciò che mi mantiene energizzato nelle vendite enterprise — dopo 15 anni — è una combinazione che ritengo relativamente rara: complessità intellettuale e impatto umano genuino nello stesso ruolo. Ogni deal di grandi dimensioni è un puzzle multidimensionale: capire la strategia di un\'azienda in modo abbastanza profondo da progettare una soluzione che crei un cambiamento reale, navigare una buying committee in cui ogni persona ha motivazioni diverse, e guadagnare infine la fiducia di leader senior che stanno mettendo la loro credibilità sulla tua raccomandazione. La sfida intellettuale da sola sarebbe sufficiente — ma ciò che rende questo sostenibile a lungo termine è che in LinkedIn posso guardare un CHRO negli occhi e dire con piena convinzione che la piattaforma aiuterà la loro organizzazione a trovare talenti migliori e a sviluppare le persone in modo più efficace. Questo allineamento tra quello che vendo e quello in cui credo genuinamente è raro, e non lo do per scontato.',
+    fit:          'Ritengo di essere un profilo solido per ruoli senior nel digital advertising enterprise perché mi colloco a un\'intersezione insolita: consulenza strategica, profondità nel performance marketing e gestione di account enterprise — costruiti in mercati internazionali e con processi d\'acquisto multi-stakeholder complessi. Nel mio ruolo attuale in LinkedIn lavoro con i principali inserzionisti europei, guidando iniziative pluriennali che combinano advisory strategico, attivazione full-funnel e collaborazione cross-funzionale con stakeholder C-level. Ciò che mi differenzia è la capacità di unire un approccio genuinamente consultivo — capire il business del cliente in profondità prima di proporre soluzioni — con un forte focus sugli outcome misurabili. E quello che voglio continuare a sviluppare è la profondità sulle soluzioni ADV specifiche, la capacità di influenzare la go-to-market strategy a livello di piattaforma, e la possibilità di lavorare con i migliori talenti del settore in un ambiente altamente innovativo.',
+    value_prop:   'La mia value proposition è semplice: non sono solo un account manager — sono un growth partner. Porto una combinazione rara di esperienza internazionale in ambienti enterprise complessi, profondità genuina negli ecosistemi di digital advertising — performance, brand e full-funnel — e un approccio strategico ma molto concreto. Ho lavorato con alcuni dei principali inserzionisti EMEA, aiutandoli a scalare le strategie digitali non solo attraverso tattiche di performance, ma attraverso una visione full-funnel autentica che collega l\'investimento in brand a outcome commerciali misurabili. Parlo la lingua del cliente — letteralmente in tre lingue, e commercialmente perché capisco cosa guida il ROI su scala enterprise. Porto struttura, empatia, accountability e una mentalità da trusted advisor. E lo faccio con l\'umiltà di chi sa che ogni cliente è diverso e ogni giorno è un\'opportunità per imparare.',
+    career_story: 'Descrivo la mia carriera come un percorso attraverso tre aree che si connettono: ecosistemi digitali, SaaS sales e account management enterprise. Ho iniziato in ruoli più tradizionali — Nokia, Maersk — dove ho imparato i fondamentali delle vendite strutturate e la gestione di relazioni complesse con i clienti. In Nokia in Liguria gestivo €1,4M di fatturato annuo — face-to-face, alto volume, centrato sulle relazioni. Poi travel e hospitality — TripAdvisor, Sabre, HotelsCombined. In TripAdvisor le cose si sono fatte commercialmente serie: target $320k, realizzato $420k, 167% di attainment, 15 deal al mese. Una promozione interna. HotelsCombined mi ha dato la comprensione dell\'economia delle piattaforme — modelli affiliate, reti di distribuzione, pensiero ecosistemico. Poi Google Ads in Teleperformance: $750k in nuovo business su target $570k, 135% over quota, fino a gestire un team di 12 e un portfolio di 120 account del valore di $4M. Poi Salesforce — il lato disciplina: discovery strutturata, MEDDIC, pipeline governance. E ora LinkedIn, dove metto tutto insieme — account enterprise strategici, programmi di trasformazione C-level, e la piena complessità di un deal lungo e multi-stakeholder.',
+    metrics:      'Ecco i numeri concreti della mia carriera. Nokia: €1,4M gestiti in Liguria — top performer tra i rep della Lombardia. TripAdvisor: target $320k, realizzato $420k — 167% di attainment. 15 deal al mese a una media di $24k ciascuno. Promozione interna. Google Ads in Teleperformance: target $570k, $750k in nuovo business — 135% over quota. Promosso ad Account Manager (115% attainment), poi Sales Manager con un team di 12 e un portfolio di 120 account del valore di $4M. HotelsCombined: crescita del fatturato di mercato di $0,5M+ l\'anno. Salesforce: portfolio di 70 account per $1,4M, target new business $600k. LinkedIn: ruolo attuale su portfolio mid-market ed enterprise EMEA con valori contrattuali pluriennali. Questi numeri riflettono non solo la performance individuale ma la coerenza — ho superato target e KPI in ogni azienda in cui erano chiaramente definiti.',
+    star_influence:'Esempio STAR di influenza strategica degli stakeholder. Un grande cliente enterprise nel settore education stava investendo massicciamente in advertising ma faceva affidamento quasi esclusivamente su formati low-funnel — Lead Gen — con risultati in costante declino. I decision-maker erano molto resistenti al cambiamento e fissati sui metriche di ROI immediato. Il mio compito era convincerli a ripensare l\'intero approccio investendo nell\'upper-funnel e nel branded content. Ho costruito una narrative data-driven combinando dati di performance interni, benchmark di settore da verticali comparabili e un caso studio EMEA rilevante che affrontava specificamente l\'obiezione "questo non funzionerà nel nostro settore". Ho coinvolto il team marketing centrale del cliente in un workshop strategico — spostando la conversazione dalla review dell\'account alla vera co-creazione — e ho collaborato internamente con il team Insights per produrre un report su misura. Risultato: abbiamo riposizionato l\'intera strategia su un approccio full-funnel, l\'investimento è aumentato del 35%, e abbiamo ottenuto un piano triennale con allocazione di budget stabile. Sono diventato il punto di contatto diretto del CMO per tutte le decisioni media future.',
+    star_launch:  'Esempio STAR di allineamento cross-funzionale: dovevamo lanciare una nuova soluzione pubblicitaria — una Conversion API — ma la go-to-market strategy era frammentata tra Sales, Product e Marketing, senza alcun allineamento su priorità o metriche di successo. Come senior account lead, ho preso l\'iniziativa di colmare il divario senza aspettare che l\'allineamento arrivasse dall\'alto. Ho organizzato un kickoff strutturato con tutti gli stakeholder chiave, costruito un piano operativo con owner chiari, deliverable e scadenze, e usato la mia credibilità interna per spostare la conversazione dalla politica all\'esecuzione rapidamente. La soluzione è stata lanciata in beta con cinque clienti pilota e ha prodotto risultati iniziali misurabili entro il primo mese. L\'approccio è stato successivamente adottato come best practice dal team EMEA.',
+    star_users:   'Una delle storie che meglio rappresenta il mio approccio alle relazioni con i clienti è accaduta in Salesforce. Stavo gestendo un cliente SMB che stava valutando licenze Enterprise — che mi avrebbero generato una commissione significativa. Durante la discovery, ho capito che i loro use case reali non giustificavano il tier Enterprise. Licenze Professional e un connettore partner erano più che sufficienti. Ho proattivamente raccomandato Professional al posto di Enterprise, ho spiegato esattamente perché, ho quantificato quanto avrebbero risparmiato, e ho accettato la perdita sulla mia commissione — sapendo chiaramente che non era nel mio interesse a breve termine. Il cliente ha adottato la soluzione senza problemi. Quando ho lasciato Salesforce, si sono messi in contatto personalmente per sapere dove ero andato. Questo è il segnale di fiducia più forte che un cliente possa darti — e conferma qualcosa in cui credo profondamente: fare la cosa giusta per l\'utente non è in conflitto con i risultati commerciali a lungo termine. È esattamente come si costruiscono.',
+    star_results: 'Il deal più complesso — e quello di cui sono più orgoglioso — è avvenuto in HotelsCombined a Barcellona. Ho identificato Qwant — il motore di ricerca francese privacy-first, alternativa europea a Google — come un\'opportunità strategica per il nostro programma affiliate alberghiero. Non c\'era nessuna relazione esistente, nessun interesse inbound. È iniziato con un singolo messaggio outbound su LinkedIn. In nove mesi ho mappato l\'intera struttura decisionale di Qwant — tech, legal, product e partnerships — coordinato i team interni di HotelsCombined e i partner di integrazione esterni, e fatto diversi viaggi a Parigi per costruire la relazione e allineare tutte le parti — senza parlare una parola di francese. Il risultato: un accordo affiliate strutturato in cui Qwant avrebbe guadagnato fino al 90% di revenue share sulle prenotazioni alberghiere, con un target di €2,5M di volume prenotazioni mensile — circa 10.000 prenotazioni al mese a un ticket medio di €250 — per oltre €2,7M l\'anno per Qwant a pieno regime. L\'integrazione è stata poi sospesa per la posizione di Qwant su cookie e data tracking — del tutto coerente con la loro identità privacy-first. Per me resta il deal di cui sono più orgoglioso: costruito da zero, completamente self-driven, gestito end-to-end in più lingue.',
+    star_difficult:'Esempio STAR — cliente difficile ereditato. Ho rilevato un grande cliente che aveva appena completato l\'integrazione di una soluzione venduta in modo non del tutto corretto. Il CEO era furioso — nel primo incontro c\'erano urla, accuse di essere poco professionali e fuorvianti. Invece di difendermi, ho investito tempo nel capire la situazione: ho analizzato tutta la documentazione storica, parlato con il partner per capire la loro prospettiva, e sono tornato dal cliente per capire esattamente cosa si aspettava. Sono arrivato alla conclusione che il cliente aveva in parte ragione. Ho organizzato un briefing interno e proposto un piano di remediation passo per passo — non una soluzione perfetta, ma una risposta strutturata che consegnava parzialmente la promessa originale mentre il prodotto completava il suo upgrade di roadmap. Il cliente non ha cancellato. Abbiamo mantenuto l\'abbonamento e chiuso un upgrade a prezzo scontato — un aumento netto dei ricavi nonostante la crisi. Ho poi trasformato quell\'esperienza in un deck di product education per tutti gli AE del team, per evitare future situazioni di mis-selling.',
+    strength:     'I miei punti di forza principali. Onestà: è il fondamento di come opero — con i clienti, i colleghi e nel modo in cui mi rappresento. Positività: affronto le situazioni difficili con la convinzione genuina che un risultato positivo sia raggiungibile — non è ingenuità, è impegno. Supportivo: il feedback che ho ricevuto con più consistenza in tutta la mia carriera è che sono la persona a cui le persone si rivolgono quando hanno bisogno di aiuto. Curioso: leggo libri di business, marketing, metodologia di vendita. Il mio ultimo traguardo personale: ho iniziato a suonare la batteria. Ho corso la mia terza mezza maratona a Valencia lo scorso ottobre. Credo che la stessa mentalità che ti fa correre 21km ti renda un venditore migliore. Dedizione: quando mi impegno su qualcosa, lo porto a termine.',
+    weakness:     'Sulle aree di sviluppo: tendo ad essere troppo autocritico — cerco sempre di più, e a volte dimentico di fermarmi a celebrare le piccole vittorie che si compongono in quelle grandi. Sono anche qualcuno che vuole naturalmente rendere tutti felici, il che in un contesto commerciale può portarmi occasionalmente a over-investire in relazioni che non hanno abbastanza potenziale commerciale. Sono più consapevole di entrambi ora di quanto non fossi in passato — ho imparato a essere più selettivo su dove indirizzo l\'energia, e a costruire momenti di riflessione piuttosto che spingermi sempre verso la prossima sfida. Sto anche sviluppando continuamente le mie capacità di influenza in ambienti multi-stakeholder complessi — è qualcosa in cui ho investito deliberatamente attraverso la formazione NLP e libri come The Challenger Sale.',
+    why_move:     'Ho avuto un\'esperienza genuinamente positiva in LinkedIn — in particolare nello sviluppo del pensiero strategico, nella costruzione di relazioni C-suite e nel lavorare su programmi di trasformazione enterprise pluriennali. Quello che cerco ora è la possibilità di avvicinarmi di nuovo al performance marketing digitale e all\'impatto misurabile della campagna — la connessione diretta tra una raccomandazione strategica e un risultato commerciale quantificabile. Prima, lavorando con Google Ads in Teleperformance, quell\'ambiente performance-driven era profondamente motivante. Voglio portare la profondità delle relazioni enterprise e l\'approccio consultivo che ho sviluppato in LinkedIn in un ambiente dove la performance è al centro. Cerco anche un\'azienda che valorizzi le relazioni con i clienti, l\'equilibrio vita-lavoro, dove posso unirmi a un team forte e avere un impatto positivo sia sui clienti che sui colleghi.',
+    full_funnel:  'La mia esperienza nel full-funnel advertising viene da più angolazioni. In Teleperformance ho lavorato direttamente con l\'intera suite Google Ads — Search, Shopping, YouTube e Display — aiutando clienti PMI e mid-market in EMEA a costruire campagne integrate. In HotelsCombined ho lavorato sull\'economia delle piattaforme affiliate — capendo come l\'attività di awareness nell\'upper-funnel guidi la conversion nel lower-funnel in un modello marketplace. In TripAdvisor ho consulted clienti hotel sulla strategia PPC attraverso TripConnect, gestendo la tensione tra investimento in brand e metriche di performance diretta. In LinkedIn aiuto i clienti enterprise a fare il caso per l\'investimento nel talent brand accanto ai prodotti Recruiter e Jobs orientati alla performance. Il filo conduttore: le campagne più efficaci collegano brand, consideration e conversion in una narrativa coerente.',
+    vertical:     'Ho lavorato in più verticali nel corso della mia carriera, il che mi ha permesso di spostarmi rapidamente tra i settori e identificare le leve commerciali che contano in ciascun contesto. In hospitality e travel — TripAdvisor, HotelsCombined, Ryanair, Sabre, Booking.com — ho sviluppato conoscenza approfondita del settore e relazioni solide con operatori di tutte le dimensioni. In tech e SaaS — Salesforce, LinkedIn, Revolut — ho gestito cicli enterprise complessi con lunghe buying committee e impegni pluriennali. In digital advertising — Google Ads in Teleperformance — ho lavorato con clienti in retail, FMCG, education, finance e B2B technology. In fintech — Revolut — ho avuto la prima esposizione a come i prodotti finanziari si incorporano nei customer journey su scala. I fondamentali della gestione account strategica si traducono tra i settori più di quanto la gente si aspetti.',
+    development:  'Investo deliberatamente nel mio sviluppo. Sul fronte delle letture: sono un fan di Sean Ellis sul growth marketing, e The Challenger Sale di Matthew Dixon ha cambiato il modo in cui penso al leading with insight nelle conversazioni di vendita. Cerco costantemente corsi e framework che estendano la mia capacità di influenzare in ambienti multi-stakeholder complessi. Sul fronte personale: corro mezze maratone — Valencia lo scorso ottobre è stata la mia terza. Ho iniziato a suonare la batteria di recente. Trovo che la disciplina dell\'allenamento fisico si traduca direttamente nel modo in cui affronto le sfide professionali: consistenza sull\'intensità, piccole vittorie che si compongono in quelle grandi. Imparo anche da mio figlio — specificamente, come semplifica concetti complessi per la comunicazione — il che mi ha insegnato a riformulare dalla prospettiva di chi ascolta.',
+    relationship: 'Per gli stakeholder interni, investo in relazioni genuine — non solo operative. Mi relaziono regolarmente con marketing, solution engineering e team insights per condividere feedback dei clienti, allinearsi sulle best practice e creare asset condivisi. Mi rendo disponibile e utile per i colleghi più recenti — che si tratti di un incontro informale di introduzione, condividere una struttura di deal o offrirsi per una co-presentazione client. Per gli stakeholder esterni — clienti, partner — credo nella presenza. Questo significa rispondere rapidamente, presentarsi quando non è richiesto, e iniziare il contatto con idee e insights piuttosto che aspettare sempre un motivo. Con i partner ho costruito ritmi collaborativi solidi: campagne email congiunte, webinar condivisi, storie di successo co-create. Il principio è semplice: le persone comprano da persone di cui si fidano, e la fiducia si costruisce attraverso la consistenza della presenza e dell\'intenzione nel tempo.',
+    contact:      'Puoi contattare Matteo a matteo1789@gmail.com, chiamare il +353 089 233 4107 o su LinkedIn: linkedin.com/in/grassimatteo.',
+    default:      'Ottima domanda — posso approfondire qualsiasi aspetto del background di Matteo: il ruolo attuale in LinkedIn, l\'esperienza su deal complessi, l\'approccio al C-level, la leadership del team, il background Google Ads, il settore hospitality, Nokia, il MBA, la metodologia di vendita, AI & HR tech — oppure le sue STAR stories, punti di forza, career narrative e cosa lo motiva. Cosa vuoi esplorare?'
+  },
+  es: {
+    linkedin:     'En mi rol actual como Senior Account Director en LinkedIn gestiono un portfolio de cuentas enterprise estratégicas en EMEA, ocupándome del ciclo comercial completo — desde el descubrimiento ejecutivo y el diseño de soluciones hasta la negociación de contratos plurianuales, renovación y expansión. El núcleo del rol es actuar como socio de transformación, no como proveedor: ayudo a los líderes C-level a conectar su estrategia de talento — contratación, formación, workforce planning — con resultados de negocio medibles, a través de la suite de Talent y Learning Solutions de LinkedIn. Lo que hace este rol complejo y gratificante es la amplitud de stakeholders involucrados: un solo deal requiere la alineación de HR leadership, Finance, Legal, Procurement y el C-suite, cada uno con prioridades y métricas de éxito diferentes. Desde octubre de 2023 he construido relaciones ejecutivas sólidas en mi portfolio y he alcanzado consistentemente mis objetivos de revenue y expansión.',
+    achievement:  'Tres logros destacan en mi carrera. En TripAdvisor alcancé consistentemente el 130% de la cuota anual en el portfolio hotelero EMEA — reconocido en múltiples ocasiones como mejor representante de ventas, reflejo no solo del volumen sino de la calidad de las relaciones con clientes que estaba construyendo. En Nokia en Liguria generé más de €1,7 millones en ventas anuales acumuladas desde un territorio que construí en gran parte desde cero, ganando regularmente el premio interno al mejor rendimiento comercial. Más recientemente en LinkedIn, el logro del que más orgulloso estoy es haber sido confiado con algunas de las cuentas más estratégicamente complejas del portfolio EMEA — compromisos plurianuales de siete cifras donde la relación comercial tiene un impacto genuino en la estrategia de talento del cliente. A lo largo de mi carrera también he sido reconocido como Star Performer y Salesperson of the Month en varias empresas: lo interpreto como un reflejo de consistencia en el tiempo, no de un único trimestre brillante.',
+    clevel:       'Mi principio en el engagement C-suite es simple: los ejecutivos no compran productos, compran resultados. Antes de cualquier reunión ejecutiva invierto tiempo comprendiendo la agenda estratégica — los objetivos de crecimiento, las brechas de talento, las prioridades del consejo, las presiones competitivas — para entrar en la sala con insights, no con un deck de producto. En la práctica esto significa presentar benchmarks de sector relevantes, vincular nuestra propuesta a la estrategia publicada por la empresa y cuantificar el ROI en términos que resuenen con un CFO tanto como con un CHRO. También opero en multithreading deliberado — construyendo relaciones paralelas con HR, Finance, Legal y Procurement — para que el apoyo ejecutivo esté reforzado desde múltiples niveles y no se derrumbe si un único champion cambia de rol. Este enfoque me ha permitido cerrar y expandir contratos estratégicos plurianuales en LinkedIn donde la primera conversación ocurrió directamente a nivel de C-suite.',
+    team:         'Mi experiencia de liderazgo más significativa fue en Teleperformance en Barcelona (2019–2022), donde gestioné un equipo de ventas de 13 personas — SDRs y Account Executives — dentro del negocio de Google Ads. Más allá de las operaciones diarias y la gestión de KPIs, lo que encontré más impactante fue construir planes de desarrollo individuales para cada miembro del equipo: algunos querían avanzar hacia el account management, otros hacia el liderazgo en ventas, y alinear su trabajo diario con esos objetivos creó un compromiso real. Introduje sesiones de coaching estructuradas semanales, un programa de peer coaching y rediseñé el proceso de preparación de forecast para que fuera más transparente y preciso. El equipo pasó de un rendimiento inconsistente a alcanzar los objetivos de manera fiable trimestre tras trimestre. También lideré equipos junior en HotelsCombined y Ve Interactive — más pequeños en tamaño, pero con la misma filosofía: expectativas claras, coaching genuino y accountability sin micromanagement.',
+    international:'Mi carrera se ha desarrollado en cuatro países y cuatro industrias en 20 años, lo que me ha dado una perspectiva genuinamente multicultural sobre las ventas enterprise. Empecé en Italia con Nokia en Liguria, aprendiendo la disciplina del field sales y la responsabilidad sobre el territorio. Luego me moví a España — TripAdvisor en Barcelona, luego HotelsCombined, Ryanair y Teleperformance entre Barcelona y Madrid — donde desarrollé una comprensión profunda de cómo vender en los mercados del sur de Europa y de EMEA. Desde 2022 estoy basado en Dublín, primero en Salesforce, brevemente en Revolut, y ahora en LinkedIn. Cada país trajo una cultura comercial diferente: el enfoque relationship-first de los mercados mediterráneos, el estilo más process-driven del norte de Europa, y el ritmo de alto crecimiento del ecosistema SaaS de Dublín. Hablar con fluidez inglés, italiano y español no ha sido solo una conveniencia profesional — ha cambiado la calidad de las conversaciones ejecutivas, especialmente en mercados donde interactuar con alguien en su idioma nativo genera confianza mucho más rápido que cualquier presentación.',
+    music:        'Entre 1997 y 2007 fui el guitarrista principal de Klasse Kriminale — casi una década como músico profesional a tiempo completo. Actuamos en más de 300 conciertos, grabamos 7 álbumes de estudio y giramos extensamente por Europa, EE.UU., Canadá y Japón, compartiendo escenario con bandas como Dropkick Murphys, Sham 69, Angelic Upstarts, Agnostic Front, Madball y Cock Sparrer. Lo que la gente no siempre conecta es cuánto esa experiencia se traduce directamente en lo que hago hoy: actuar en vivo te enseña a leer al público y adaptar tu actuación en tiempo real; girar internacionalmente desarrolla la resiliencia y la capacidad de rendir con constancia bajo presión; grabar un álbum en equipo es una clase magistral de resolución colaborativa de problemas con plazos ajustados y altas apuestas. Estoy orgulloso de ese capítulo — fue intenso, creativo, formativo — y sigo tocando. También creo que es un diferenciador genuino: no muchos profesionales de ventas enterprise han pasado casi una década actuando en escenarios en cuatro continentes.',
+    skills:       'Mi conjunto de habilidades se sitúa en la intersección de ventas enterprise, tecnología y liderazgo de personas. En el lado comercial aporto experiencia profunda en ventas B2B enterprise, gestión estratégica de cuentas, ciclos de venta SaaS y habilitación de talent acquisition — construida en 15+ años y cuatro países. En el lado operativo soy fuerte en revenue forecasting, pipeline integrity, deal governance y gestión de CRM (certificado Salesforce). También tengo una base sólida en marketing digital (certificado Google Ads, CAM Diploma) y una competencia creciente en IA & HR Tech a través de mi trabajo en LinkedIn. Estoy certificado en Sell with NLP, que es la base de mi enfoque consultivo y de mi capacidad para navegar procesos de compra multi-stakeholder complejos. Lo que une todo esto es una curiosidad genuina por la IA y el futuro del talento — no solo vendo productos de LinkedIn, creo genuinamente en el valor que aporto a los clientes.',
+    deals:        'La complejidad de los deals enterprise es algo que he navegado en cada etapa de mi carrera, pero de forma más intensa en LinkedIn. Mis deals típicos implican ciclos de 6 a 18 meses, comités de compra de 6 a 10 stakeholders — HR leadership, Finance, Legal, Procurement, C-suite — y valores contractuales que alcanzan siete cifras en términos plurianuales. Mi enfoque es metódico: mapeo la unidad completa de toma de decisiones desde el primer día, me califico rigurosamente con criterios tipo MEDDIC e identifico al champion interno que llevará el momentum cuando no esté presente. Construyo un business case diferenciado para cada grupo de stakeholders — el CHRO se preocupa por la transformación de la estrategia de talento, el CFO por el ROI y el coste-por-contratación, el Legal por la gobernanza de datos y el cumplimiento normativo — y uso sesiones de alineación ejecutiva para mantener el impulso e identificar bloqueos antes de que frenen el deal. En Salesforce apliqué la misma disciplina en ciclos SMB más cortos, y en TripAdvisor gestioné complejas negociaciones de renovación plurianuales en el mercado hotelero EMEA, donde la retención requería profundidad de relación genuina, no solo gestión contractual.',
+    salesforce:   'Mi experiencia con Salesforce funciona en dos niveles. Como empresa: de abril 2022 a abril 2023 fui Senior Account Executive en Dublín, responsable del ciclo de ventas completo en el segmento SMB — empresas de 50 a 200 empleados. Coordiné pre-ventas, marketing y business development, conduje sesiones de discovery estructuradas y cerré nuevo negocio en un mercado CRM competitivo. Lo que fue particularmente valioso fue aprender la cultura de ventas interna de Salesforce: altamente orientada a procesos, disciplinada en datos y enfocada en value-based selling. Como plataforma: estoy certificado en Salesforce y lo uso diariamente en LinkedIn para gestión de pipeline, opportunity staging, preparación de forecast y deal governance. Creo que la disciplina en CRM es una ventaja competitiva genuina — la calidad de los datos en tu pipeline determina la calidad de tu forecast y tu capacidad para priorizar oportunidades de alto valor.',
+    digital:      'Mi experiencia en marketing digital se construyó durante tres años en Teleperformance en Barcelona (2019–2022), donde progresé a través de tres roles de creciente responsabilidad dentro del negocio de Google Ads. Como Account Executive asesoré a clientes pyme y mid-market en EMEA sobre estrategia de performance marketing — gestionando campañas en Google Search, Shopping, YouTube y Display Network con foco en ROI medible. Como Account Manager me centré en la optimización de portfolios: analizando datos de rendimiento de campañas, identificando oportunidades de crecimiento de ingresos y formando nuevos agentes. Como Sales Manager fui responsable del rendimiento del equipo completo de 13 personas — establecimiento de KPIs, sesiones de coaching, preparación de forecasts semanales y presentación de analytics a stakeholders senior en un entorno de alta intensidad. Estoy certificado en Google Ads y tengo el CAM Diploma en Marketing Digital del Chartered Institute of Marketing.',
+    hospitality:  'El sector hospitality y travel atraviesa una parte significativa de mi carrera, con profundidad genuina a lo largo de toda la cadena de valor. En TripAdvisor (2013–2015, Oxford y EMEA) gestioné cuentas hoteleras en Europa, primero como Account Executive vendiendo Business Listings y luego como Account Manager gestionando renovaciones, consultoría PPC vía TripConnect y optimización de ingresos para grupos hoteleros. En HotelsCombined, ahora parte de Kayak (2016–2017, Barcelona), fui Business Development Manager para Italia y luego para Europa del Sur, gestionando un portfolio de partnerships afiliados estratégicos, actividades de lead generation, brand y PR y un pequeño equipo SEO. En Ryanair (2018, Madrid) fui Hotel Market Manager responsable de expandir la red de suministro de Ryanair Rooms — identificando, calificando e incorporando nuevos proveedores de alojamiento. En Sabre Hospitality Solutions (2012–2013) gestioné reservas para cadenas de lujo como Peninsula Hotels, Mandarin Oriental, Rosewood y Regent Hotels. Esta amplitud — desde reservas de lujo hasta partnerships OTA y ventas B2B directas — me da una comprensión operativa completa de cómo funciona comercialmente el sector travel a todos los niveles.',
+    early:        'Mi carrera temprana me dio algo difícil de enseñar: una verdadera disciplina comercial construida desde la base. En Nokia en Liguria (2005–2008) era Regional Field Sales Account Manager responsable del rendimiento retail y B2B de la empresa en toda la región — un territorio que construí en gran parte desde cero. Generé más de €1,7 millones en ventas anuales acumuladas, construí un nuevo portfolio de clientes mediante prospecting estructurado y gestión de relaciones, y gestioné cuentas a través de los sistemas ERP de Nokia. Era frecuentemente reconocido como el representante de ventas con mejor rendimiento de la región. Antes de Nokia, en Maersk Line (2008–2009) trabajé en atención al cliente para clientes globales clave de exportación, gestionando reservas de carga, documentación y coordinación diaria con colegas internacionales a lo largo de la cadena de suministro. No era un rol comercial, pero me enseñó precisión operativa, fiabilidad en el trato con clientes y la capacidad de trabajar eficazmente bajo presión en un entorno global.',
+    education:    'Mi trayectoria académica combina formación analítica rigurosa con aplicación práctica en los negocios. Completé un Máster en Economía en la Università degli Studi di Genova (1998–2005), que me proporcionó una sólida base cuantitativa y estratégica. Luego cursé un MBA en Negocios Internacionales en el MIB School of Management de Trieste (2011–2012) — incluyendo un programa de intercambio en el Crummer Graduate School of Business del Rollins College en Florida, que me expuso a la cultura empresarial americana y refinó mi pensamiento estratégico en un contexto internacional. En 2015–2016 añadí el CAM Diploma en Marketing Digital del Chartered Institute of Marketing en UK, que formalizó la experiencia digital que estaba desarrollando en paralelo en mi carrera. En el ámbito de certificaciones profesionales: Salesforce CRM, Google Ads y Sell with NLP — esta última es quizás la que ha tenido mayor impacto práctico cotidiano, ya que cambió mi enfoque hacia el discovery, la construcción de rapport y la navegación de procesos de compra complejos.',
+    ai_hr:        'La IA y la tecnología HR es el área que encuentro más estimulante intelectualmente en mi rol actual. Las organizaciones que están ganando la guerra por el talento hoy no son solo las que tienen mayores presupuestos — son las que usan la IA para tomar decisiones más inteligentes más rápido: sourcing asistido por IA que identifica candidatos basándose en competencias más que en títulos de trabajo, rutas de aprendizaje personalizadas que reducen el tiempo de productividad, y workforce analytics que permiten a los CHROs planificar con anticipación en lugar de reaccionar. En LinkedIn trabajo con clientes enterprise para ayudarles a construir estrategias de talento preparadas para el futuro que aprovechan estas capacidades — no como venta de producto, sino como una conversación de transformación genuina. Me mantengo cerca de la hoja de ruta de productos IA de LinkedIn y utilizo datos de benchmarking sectorial para contextualizar la conversación para diferentes stakeholders: el CHRO que piensa en la estrategia de competencias, el responsable de TA enfocado en el time-to-hire, el CFO preocupado por la optimización de costos de talento.',
+    methodology:  'Mi metodología de ventas ha sido moldeada por 15 años de experiencia y una inversión deliberada en cómo vendo — no solo en qué vendo. La base es la venta consultiva: no empiezo con productos, empiezo con problemas. Mi proceso de discovery está diseñado para revelar el dolor estratégico real — no solo los requisitos superficiales — para que la solución que propongo esté genuinamente diferenciada de un competidor que solo escuchó el RFP. Estoy certificado en PNL (Programación Neurolingüística) para ventas, lo que me ha dado un kit de herramientas refinado para construir rapport rápidamente, reformular objeciones sin fricción y comprender la psicología de compra a un nivel que la mayoría de los vendedores nunca alcanza. Mi enfoque de value-based storytelling significa que cada propuesta está anclada en el lenguaje, las métricas y las prioridades estratégicas del cliente — no en plantillas ROI genéricas. Y mi disciplina de multithreading asegura que el progreso nunca dependa de una sola relación: construyo champions en múltiples niveles, para que cuando un contacto clave se ausenta o cambia de rol, el deal sigue avanzando.',
+    forecasting:  'La integridad del pipeline es, en mi opinión, uno de los indicadores más claros de un profesional de ventas maduro. Mantengo un framework de calificación riguroso en cada etapa — usando criterios tipo MEDDIC para asegurar que cada oportunidad que comprometo en el forecast está genuinamente avanzando, no simplemente ocupando espacio en el pipeline. Actualizo Salesforce diariamente, señalo riesgos de forma proactiva en lugar de esperar que se resuelvan solos, y preparo forecasts semanales estructurados que distinguen claramente entre revenue comprometido, upside y pipeline en riesgo. Cuando era Sales Manager en Teleperformance, tuve que construir esta cultura en un equipo de 13 personas — lo que implicó establecer un lenguaje compartido sobre la calificación de deals, crear rutinas de coaching sobre CRM hygiene y enseñar a las personas que un forecast honesto vale más para el negocio que uno optimista. El resultado fue que la dirección confiaba en nuestros números.',
+    motivation:   'Lo que me mantiene con energía en las ventas enterprise — después de 15 años — es una combinación que creo es relativamente poco común: complejidad intelectual e impacto humano genuino en el mismo rol. Cada deal de gran envergadura es un puzzle multidimensional: entender la estrategia de una empresa con suficiente profundidad para diseñar una solución que cree un cambio real, navegar un comité de compra donde cada persona tiene motivaciones diferentes, y finalmente ganarse la confianza de líderes sénior que están poniendo su credibilidad en tu recomendación. El desafío intelectual por sí solo sería suficiente — pero lo que hace esto sostenible a largo plazo es que en LinkedIn puedo mirar a un CHRO a los ojos y decir con plena convicción que la plataforma ayudará a su organización a encontrar mejor talento y desarrollar a su gente de forma más efectiva. Esa alineación entre lo que vendo y lo que genuinamente creo es poco frecuente, y no la doy por sentada.',
+    fit:          'Creo que soy un perfil sólido para roles senior en digital advertising enterprise porque me sitúo en una intersección inusual: consultoría estratégica, profundidad en performance marketing y gestión de cuentas enterprise — construidos en mercados internacionales con procesos de compra multi-stakeholder complejos. En mi rol actual en LinkedIn trabajo con los principales anunciantes europeos, liderando iniciativas plurianuales que combinan asesoramiento estratégico, activación full-funnel y colaboración cross-funcional con stakeholders de nivel C. Lo que me diferencia es la capacidad de unir un enfoque genuinamente consultivo con un fuerte foco en outcomes medibles. Y lo que siempre busco seguir desarrollando es la profundidad en soluciones ADV específicas, la capacidad de influir en la estrategia go-to-market a nivel de plataforma, y la oportunidad de colaborar con los mejores talentos del sector en un entorno altamente innovador.',
+    value_prop:   'Mi propuesta de valor es clara: no soy solo un account manager — soy un growth partner. Aporto una combinación poco común de experiencia internacional en entornos enterprise complejos, profundidad genuina en ecosistemas de digital advertising — performance, brand y full-funnel — y un enfoque estratégico pero muy práctico. He trabajado con algunos de los principales anunciantes de EMEA, ayudándoles a escalar sus estrategias digitales no solo mediante tácticas de performance, sino mediante una visión full-funnel genuina. Hablo el idioma del cliente — literalmente en tres idiomas, y comercialmente porque entiendo lo que impulsa el ROI a escala enterprise. Aporto estructura, empatía, accountability y una mentalidad de trusted advisor.',
+    career_story: 'Describiría mi carrera como un recorrido por tres áreas que se conectan: ecosistemas digitales, ventas SaaS y gestión de cuentas enterprise. Empecé en roles más tradicionales — Nokia, Maersk — aprendiendo los fundamentos de las ventas estructuradas. En Nokia en Liguria gestionaba €1,4M anuales — face-to-face, alto volumen, basado en relaciones. Luego travel y hospitality — TripAdvisor ($420k sobre $320k de objetivo, 167% de attainment, promoción interna), HotelsCombined (economía de plataformas y modelos affiliate). Luego Google Ads en Teleperformance: $750k en nuevo negocio sobre $570k de objetivo, 135% over quota, eventualmente gestionando un equipo de 12 y una cartera de 120 cuentas por $4M. Después Salesforce — el lado disciplina: discovery estructurado, MEDDIC, pipeline governance. Y ahora LinkedIn, donde pongo todo junto — cuentas enterprise estratégicas, programas de transformación C-level, y la plena complejidad de un deal largo y multi-stakeholder.',
+    metrics:      'Los números concretos de mi carrera: Nokia: €1,4M gestionados en Liguria — top performer entre los reps de Lombardía. TripAdvisor: $320k de objetivo, $420k entregado — 167% de attainment, 15 deals al mes, promoción interna. Google Ads en Teleperformance: $570k de cuota, $750k en nuevo negocio — 135% over target. Promovido a Account Manager (115% attainment), luego Sales Manager con equipo de 12 y cartera de 120 cuentas por $4M. HotelsCombined: crecimiento de ingresos de mercado de $0,5M+ al año. Salesforce: 70 cuentas, $1,4M de cartera, cuota new business $600k. LinkedIn: rol actual gestionando portfolio mid-market y enterprise EMEA con valores contractuales plurianuales.',
+    star_influence:'Ejemplo STAR de influencia estratégica de stakeholders. Un gran cliente enterprise en el sector educativo invertía masivamente en publicidad pero dependía casi exclusivamente de formatos low-funnel — Lead Gen — con resultados en declive constante. Los decisores eran muy resistentes al cambio. Mi tarea era convencerlos de invertir en upper-funnel y branded content. Construí una narrativa basada en datos combinando datos de rendimiento internos, benchmarks del sector y un caso de estudio EMEA relevante. Involucré al equipo central de marketing del cliente en un workshop estratégico y colaboré internamente con el equipo de Insights. Resultado: reposicionamos toda la estrategia hacia un enfoque full-funnel, la inversión aumentó un 35%, y aseguramos un plan trienal con asignación de presupuesto estable. Me convertí en el punto de contacto directo del CMO para todas las decisiones de medios futuras.',
+    star_launch:  'Ejemplo STAR de alineación cross-funcional: necesitábamos lanzar una Conversion API, pero la estrategia go-to-market estaba fragmentada entre Sales, Product y Marketing, sin alineación en prioridades o métricas. Como senior account lead tomé la iniciativa de crear estructura. Organicé un kickoff con todos los stakeholders clave, construí un plan operativo con owners claros y plazos, y usé mi credibilidad interna para mover la conversación hacia la ejecución. La solución se lanzó en beta con cinco clientes piloto y entregó resultados iniciales en el primer mes. El enfoque fue adoptado como best practice por el equipo EMEA.',
+    star_users:   'En Salesforce gestionaba un cliente SMB que evaluaba licencias Enterprise — con una comisión significativa para mí. Durante el discovery, comprendí que sus casos de uso reales no justificaban el tier Enterprise. Recomendé proactivamente Professional, expliqué exactamente por qué, cuantifiqué el ahorro, y acepté la pérdida en mi comisión — sabiendo que no era en mi interés a corto plazo. El cliente adoptó la solución sin problemas. Cuando finalmente dejé Salesforce, contactaron personalmente para saber dónde había ido. Esa es la señal más poderosa de confianza que un cliente puede darte — y confirmó algo en lo que creo profundamente: hacer lo correcto para el usuario no está en conflicto con los resultados comerciales a largo plazo. Es exactamente cómo se construyen.',
+    star_results: 'El deal más complejo — y del que más orgulloso estoy — ocurrió en HotelsCombined. Identifiqué Qwant — el motor de búsqueda francés privacy-first — como una oportunidad estratégica para nuestro programa de afiliados hoteleros. No había relación previa, ningún interés inbound. Empezó con un único mensaje outbound en LinkedIn. En nueve meses mapeé la estructura de decisión completa de Qwant, coordiné equipos internos y socios de integración externos, e hice múltiples viajes a París para construir la relación — sin hablar una palabra de francés. El resultado: un acuerdo de afiliados donde Qwant ganaría hasta el 90% de revenue share en reservas hoteleras, con un objetivo de €2,5M de volumen mensual — unos 10.000 reservas al mes a €250 de ticket medio, más de €2,7M anuales para Qwant a plena escala. La integración se suspendió más tarde debido a la posición de Qwant sobre cookies — coherente con su identidad privacy-first. Para mí sigue siendo el deal del que más orgulloso estoy: construido desde cero, completamente autodirigido.',
+    star_difficult:'Ejemplo STAR — cliente difícil heredado. Asumí un cliente grande que acababa de completar la integración de una solución que había sido, francamente, mal vendida. El CEO estaba furioso — en la primera llamada hubo gritos, acusaciones de ser poco profesionales. En lugar de defenderme, invertí tiempo en entender la situación: analicé toda la documentación histórica del deal, hablé con el socio, y volví al cliente para entender exactamente qué esperaba versus lo que recibió. Concluí que el cliente tenía en parte razón. Organicé un briefing interno y propuse un plan de remediación paso a paso. El cliente no canceló. Mantuvimos la suscripción y cerramos una solución mejorada con descuento — un aumento neto de ingresos a pesar de la crisis. Transformé esa experiencia en un deck de educación de producto para todos los AEs del equipo.',
+    strength:     'Mis fortalezas principales: Honestidad — es la base de cómo opero, con clientes, colegas y en cómo me represento a mí mismo. Positividad — affronto las situaciones difíciles con la convicción genuina de que es posible lograr un resultado positivo. Apoyo — el feedback que he recibido con más consistencia en toda mi carrera es que soy la persona a la que la gente acude cuando necesita ayuda. Curiosidad — leo ampliamente sobre negocios, marketing y metodología de ventas. Mi último logro personal: empecé a tocar la batería. Mi tercera media maratón fue en Valencia el pasado octubre. Dedicación — cuando me comprometo con algo, lo termino.',
+    weakness:     'En áreas de desarrollo: puedo ser demasiado autocrítico — siempre busco más y a veces me olvido de celebrar las pequeñas victorias. También soy alguien que naturalmente quiere satisfacer a todos, lo que ocasionalmente puede llevarme a sobre-invertir en relaciones sin suficiente potencial comercial. Soy más consciente de ambos ahora — he aprendido a ser más selectivo sobre dónde dirijo mi energía. También estoy desarrollando continuamente mis habilidades de influencia en entornos multi-stakeholder complejos.',
+    why_move:     'He tenido una experiencia genuinamente positiva en LinkedIn — especialmente en el desarrollo del pensamiento estratégico, la construcción de relaciones C-suite y el trabajo en programas de transformación enterprise plurianuales. Lo que busco ahora es la oportunidad de acercarme de nuevo al performance marketing digital y al impacto medible de campaña — la conexión directa entre una recomendación estratégica y un resultado comercial cuantificable. También busco una empresa que valore las relaciones con los clientes, el equilibrio vida-trabajo, donde pueda unirme a un equipo sólido y tener un impacto positivo tanto en clientes como en colegas.',
+    full_funnel:  'Mi experiencia en publicidad full-funnel viene de múltiples ángulos. En Teleperformance trabajé directamente con la suite completa de Google Ads — Search, Shopping, YouTube y Display — ayudando a clientes pyme y mid-market en EMEA. En HotelsCombined trabajé en economía de plataformas y modelos de afiliados. En TripAdvisor asesoré a clientes hoteleros sobre estrategia PPC a través de TripConnect. En LinkedIn ayudo a clientes enterprise a argumentar la inversión en talent brand junto a productos orientados al rendimiento. El hilo conductor: las campañas más efectivas conectan brand, consideración y conversión en una narrativa coherente.',
+    vertical:     'He trabajado en múltiples verticales a lo largo de mi carrera: hospitality y travel (TripAdvisor, HotelsCombined, Ryanair, Sabre, Booking.com), tech y SaaS (Salesforce, LinkedIn, Revolut), digital advertising (Google Ads en Teleperformance — retail, FMCG, educación, finanzas, B2B tech) y fintech (Revolut). Lo que he descubierto es que los fundamentos de la gestión estratégica de cuentas se traducen entre sectores más de lo que la gente espera: el sector cambia; la forma de ganar confianza, construir un business case y navegar un comité de compra complejo no cambia.',
+    development:  'Invierto deliberadamente en mi propio desarrollo. En lecturas: soy fan de Sean Ellis sobre growth marketing, y The Challenger Sale de Matthew Dixon cambió cómo pienso en las conversaciones de ventas. Busco constantemente cursos y frameworks que amplíen mi capacidad de influir en entornos multi-stakeholder complejos. A nivel personal: corro medias maratones — Valencia el pasado octubre fue la tercera. Recientemente empecé a tocar la batería. La disciplina del entrenamiento físico se traduce directamente en cómo affronto los desafíos profesionales.',
+    relationship: 'Para los stakeholders internos, invierto en relaciones genuinas — no solo operativas. Me relaciono regularmente con marketing, ingeniería de soluciones y equipos de insights para compartir feedback de clientes y alinear best practices. Me hago disponible y útil para colegas más recientes. Para los stakeholders externos — clientes, socios — creo en la presencia: responder rápido, aparecer cuando no es requerido, e iniciar el contacto con ideas e insights. Con socios he construido ritmos colaborativos sólidos: campañas conjuntas de email, webinars compartidos, historias de éxito co-creadas.',
+    contact:      'Puedes contactar a Matteo en matteo1789@gmail.com, llamar al +353 089 233 4107 o en LinkedIn: linkedin.com/in/grassimatteo.',
+    default:      'Buena pregunta — puedo profundizar en cualquier aspecto del perfil de Matteo: su rol en LinkedIn, experiencia en deals complejos, enfoque con el C-level, liderazgo de equipos, Google Ads, hospitality, Nokia, MBA, metodología de ventas, IA & HR tech — o sus STAR stories, fortalezas, narrativa de carrera y motivaciones. ¿Qué te gustaría explorar?'
+  }
+};
+
+function findAnswer(msg, l) {
+  const m = msg.toLowerCase();
+  const k = kb[l] || kb.en;
+  // STAR — teamwork
+  if (m.includes('teamwork') || m.includes('team work') || m.includes('ryanair storm') || m.includes('quarterly') || m.includes('lavoro di squadra') || m.includes('trabajo en equipo') || m.includes('internet') || m.includes('quarter bonus') || m.includes('last day')) return k.star_teamwork;
+  // STAR — proactive initiative
+  if (m.includes('proactive') || m.includes('proattiv') || m.includes('initiative') || m.includes('inziativa') || m.includes('account guide') || m.includes('specialist') || m.includes('office hours') || m.includes('audit guide') || m.includes('account analysis')) return k.star_proactive;
+  // STAR — multithreading / champion
+  if (m.includes('multithread') || m.includes('champion') || m.includes('informal') || m.includes('off-road') || m.includes('fuori dai canali') || m.includes('off road') || m.includes('decision maker within')) return k.star_multithreading;
+  // STAR — difficult client
+  if (m.includes('difficult client') || m.includes('difficult customer') || m.includes('cliente difficile') || m.includes('cliente difícil') || m.includes('angry') || m.includes('arrabbiato') || m.includes('inherited') || m.includes('ereditato') || m.includes('mis-sell') || m.includes('complaint') || m.includes('shouting')) return k.star_difficult;
+  // STAR — users first
+  if (m.includes('users first') || m.includes('user first') || m.includes('enterprise vs professional') || m.includes('commission') || m.includes('right thing') || m.includes('cosa giusta') || m.includes('cosa corretta') || m.includes('trust client') || m.includes('recommend professional')) return k.star_users;
+  // STAR — Qwant/results
+  if (m.includes('qwant') || m.includes('biggest deal') || m.includes('best deal') || m.includes('most proud') || m.includes('più orgoglioso') || m.includes('más orgulloso') || m.includes('from scratch') || m.includes('da zero') || m.includes('desde cero') || m.includes('affiliate deal') || m.includes('90%') || m.includes('2.7m') || m.includes('paris')) return k.star_results;
+  // STAR — influence / full-funnel shift
+  if (m.includes('star') && (m.includes('influen') || m.includes('stakeholder') || m.includes('shift') || m.includes('full funnel') || m.includes('upper funnel') || m.includes('education client') || m.includes('35%'))) return k.star_influence;
+  // STAR — cross-functional launch
+  if (m.includes('launch') || m.includes('cross-function') || m.includes('go-to-market') || m.includes('gtm') || m.includes('conversion api') || m.includes('product launch') || m.includes('beta') || m.includes('lancio') || m.includes('lanzamiento')) return k.star_launch;
+  // Fit / good fit
+  if (m.includes('good fit') || m.includes('why fit') || m.includes('why should we hire') || m.includes('right candidate') || m.includes('perché sei adatto') || m.includes('por qué eres') || m.includes('suitable') || m.includes('qualif') || m.includes('fit for this')) return k.fit;
+  // Value proposition / why me
+  if (m.includes('value prop') || m.includes('why you') || m.includes('why me') || m.includes('differenti') || m.includes('what do you bring') || m.includes('perché proprio') || m.includes('cosa porti') || m.includes('unique') || m.includes('unico')) return k.value_prop;
+  // Career story / walk me through
+  if (m.includes('walk me through') || m.includes('tell me about yourself') || m.includes('career story') || m.includes('career summary') || m.includes('raccontami di te') || m.includes('cuéntame sobre ti') || m.includes('background') || m.includes('journey') || m.includes('percorso') || m.includes('trayectoria')) return k.career_story;
+  // Metrics / numbers
+  if (m.includes('number') || m.includes('metric') || m.includes('quota') || m.includes('target') || m.includes('attainment') || m.includes('revenue') || m.includes('risultato numerico') || m.includes('cifre') || m.includes('numeri') || m.includes('datos') || m.includes('130%') || m.includes('167%') || m.includes('135%')) return k.metrics;
+  // Strengths
+  if (m.includes('strength') || m.includes('forte') || m.includes('fortaleza') || m.includes('best quality') || m.includes('proud of yourself') || m.includes('positiv') || m.includes('honesty') || m.includes('onestà') || m.includes('honestidad')) return k.strength;
+  // Weaknesses
+  if (m.includes('weakness') || m.includes('weak') || m.includes('area of improvement') || m.includes('develop') && m.includes('yourself') || m.includes('debole') || m.includes('debilidad') || m.includes('improve yourself') || m.includes('work on')) return k.weakness;
+  // Why move / leaving LinkedIn
+  if (m.includes('why leave') || m.includes('why move') || m.includes('why change') || m.includes('looking for') || m.includes('next step') || m.includes('perché lasci') || m.includes('por qué te vas') || m.includes('what are you looking') || m.includes('career change') || m.includes('motivation')) return k.why_move;
+  // Full funnel advertising
+  if (m.includes('full-funnel') || m.includes('full funnel') || m.includes('upper funnel') || m.includes('brand awareness') || m.includes('lower funnel') || m.includes('funnel approach') || m.includes('advertising strategy')) return k.full_funnel;
+  // Vertical experience
+  if (m.includes('vertical') || m.includes('sector') || m.includes('industry') || m.includes('cross-vertical') || m.includes('which sector') || m.includes('settore') || m.includes('industria')) return k.vertical;
+  // Self-development / learning
+  if (m.includes('develop yourself') || m.includes('learning') || m.includes('book') || m.includes('challeng') || m.includes('half marathon') || m.includes('drum') || m.includes('sviluppo personale') || m.includes('desarrollo personal') || m.includes('formati') || m.includes('reading')) return k.development;
+  // Relationship building
+  if (m.includes('relationship') || m.includes('build trust') || m.includes('internal stakeholder') || m.includes('relazione') || m.includes('relación') || m.includes('rapport') || m.includes('partner') || m.includes('how do you build')) return k.relationship;
+  // Education / MBA
+  if (m.includes('mba') || m.includes('universit') || m.includes('studi') || m.includes('education') || m.includes('formazione') || m.includes('formación') || m.includes('degree') || m.includes('laurea') || m.includes('rollins') || m.includes('genova') || m.includes('chartered') || m.includes('diploma')) return k.education;
+  // AI / HR Tech
+  if (m.includes('ai') || m.includes('artificial') || m.includes('automation') || m.includes('automaz') || m.includes('hr tech') || m.includes('talent solution') || m.includes('future of work') || m.includes('machine learn') || m.includes('intelligenza') || m.includes('innovaz')) return k.ai_hr;
+  // Methodology / NLP / approach
+  if (m.includes('methodolog') || m.includes('metodolog') || m.includes('nlp') || m.includes('consultativ') || m.includes('approach') || m.includes('approccio') || m.includes('value-based') || m.includes('storytell') || m.includes('how do you sell') || m.includes('come vendi') || m.includes('philosophy') || m.includes('framework')) return k.methodology;
+  // Forecasting / pipeline / CRM
+  if (m.includes('forecast') || m.includes('pipeline') || m.includes('crm') || m.includes('pipeline integrity') || m.includes('deal governance') || m.includes('report') || m.includes('quota') || m.includes('kpi') || m.includes('metric')) return k.forecasting;
+  // Complex deals
+  if (m.includes('deal') || m.includes('complex') || m.includes('complesso') || m.includes('compleja') || m.includes('trattativa') || m.includes('contratto') || m.includes('contrato') || m.includes('ciclo') || m.includes('sales cycle') || m.includes('procurement') || m.includes('governance') || m.includes('closing') || m.includes('chiusura') || m.includes('multithread') || m.includes('champion') || m.includes('seven figure') || m.includes('sette cifre')) return k.deals;
+  // Salesforce / CRM tool
+  if (m.includes('salesforce') || m.includes('crm tool') || m.includes('smb') || m.includes('solution sell')) return k.salesforce;
+  // Digital / Google Ads
+  if (m.includes('google') || m.includes('digital market') || m.includes('ppc') || m.includes('ads') || m.includes('adword') || m.includes('youtube') || m.includes('display') || m.includes('search campaign') || m.includes('teleperform') || m.includes('campagna')) return k.digital;
+  // Hospitality / Travel
+  if (m.includes('tripadvisor') || m.includes('booking') || m.includes('ryanair') || m.includes('hotel') || m.includes('hospitality') || m.includes('travel') || m.includes('sabre') || m.includes('hotelscombined') || m.includes('kayak') || m.includes('albergo') || m.includes('viaggio') || m.includes('turismo')) return k.hospitality;
+  // Nokia / early career
+  if (m.includes('nokia') || m.includes('maersk') || m.includes('early career') || m.includes('inizio') || m.includes('first job') || m.includes('liguria') || m.includes('field sales') || m.includes('hardware') || m.includes('cargo') || m.includes('logistic')) return k.early;
+  // Motivation / why
+  if (m.includes('motiv') || m.includes('passion') || m.includes('why linkedin') || m.includes('why sales') || m.includes('perché') || m.includes('por qué') || m.includes('value') || m.includes('valore') || m.includes('drive') || m.includes('inspire')) return k.motivation;
+  // C-level engagement
+  if (m.includes('c-level') || m.includes('c level') || m.includes('ceo') || m.includes('cfo') || m.includes('cto') || m.includes('chro') || m.includes('negotiat') || m.includes('trattativ') || m.includes('negoci') || m.includes('executive engag') || m.includes('board') || m.includes('direzione')) return k.clevel;
+  // Team management
+  if (m.includes('team') || m.includes('manag') || m.includes('gestione') || m.includes('gestión') || m.includes('coach') || m.includes('people') || m.includes('liderare') || m.includes('lideraz') || m.includes('sdr') || m.includes('13 person') || m.includes('hire')) return k.team;
+  // Achievements
+  if (m.includes('achiev') || m.includes('success') || m.includes('logro') || m.includes('successo') || m.includes('award') || m.includes('performer') || m.includes('risultato') || m.includes('traguardo') || m.includes('biggest') || m.includes('proud') || m.includes('orgoglio') || m.includes('130%') || m.includes('1.7')) return k.achievement;
+  // Skills / competencies
+  if (m.includes('skill') || m.includes('competenz') || m.includes('habilidad') || m.includes('certif') || m.includes('forte') || m.includes('strength') || m.includes('what are') || m.includes('quali sono') || m.includes('cuáles son')) return k.skills;
+  // LinkedIn role
+  if (m.includes('linkedin') || m.includes('ruolo') || m.includes('rol') || m.includes('current') || m.includes('attuale') || m.includes('actual') || m.includes('role') || m.includes('job')) return k.linkedin;
+  // International career
+  if (m.includes('internat') || m.includes('career') || m.includes('carriera') || m.includes('carrera') || m.includes('country') || m.includes('spain') || m.includes('italy') || m.includes('ireland') || m.includes('barcelona') || m.includes('dublin') || m.includes('oxford') || m.includes('emea') || m.includes('europe') || m.includes('europa')) return k.international;
+  // Music
+  if (m.includes('music') || m.includes('guitar') || m.includes('klasse') || m.includes('band') || m.includes('concert') || m.includes('album') || m.includes('musica') || m.includes('punk') || m.includes('tour') || m.includes('chitarr') || m.includes('kriminale')) return k.music;
+  // Contact
+  if (m.includes('contact') || m.includes('email') || m.includes('phone') || m.includes('telefon') || m.includes('reach') || m.includes('contatt') || m.includes('call') || m.includes('write')) return k.contact;
+  return k.default;
+}
+
+let currentLang = 'en';
+let chatReady = false;
+
+function setLang(l) {
+  currentLang = l;
+  ['en','it','es'].forEach(id => document.getElementById('tab-' + id).classList.toggle('active', id === l));
+  document.getElementById('langHint').textContent = langHints[l];
+  document.getElementById('chatInput').placeholder = placeholders[l];
+  // Update i18n elements
+  const t = translations[l];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key] !== undefined) el.textContent = t[key];
+  });
+  renderTabs();
+}
+
+function renderTabs() {
+  const container = document.getElementById('suggestedTabs');
+  container.innerHTML = '';
+  suggestedQsSets[currentLang].forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'stab';
+    btn.textContent = q;
+    btn.onclick = () => {
+      document.querySelectorAll('.stab').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('chatInput').value = q;
+      sendMessage();
+    };
+    container.appendChild(btn);
+  });
+}
+
+function addMsg(text, isUser) {
+  const msgs = document.getElementById('chatMessages');
+  const d = document.createElement('div');
+  d.className = 'msg ' + (isUser ? 'msg-user' : 'msg-bot');
+  d.textContent = text;
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('chatMessages');
+  const d = document.createElement('div');
+  d.className = 'msg msg-bot msg-typing'; d.id = 'typing';
+  d.innerHTML = '<span></span><span></span><span></span>';
+  msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+}
+
+function hideTyping() { const t = document.getElementById('typing'); if (t) t.remove(); }
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const btn = document.getElementById('sendBtn');
+  const text = input.value.trim();
+  if (!text) return;
+  addMsg(text, true);
+  input.value = ''; input.style.height = 'auto';
+  btn.disabled = true;
+  showTyping();
+  try {
+    // ⬇️ SOSTITUISCI con il tuo URL Vercel dopo il deploy del backend
+    // Esempio: 'https://matteo-chat.vercel.app/api/chat'
+    const BACKEND_URL = '/api/chat';
+
+    const res = await fetch(BACKEND_URL, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, lang: currentLang })
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    hideTyping();
+    addMsg(data.reply || 'Error in response.', false);
+  } catch {
+    setTimeout(() => { hideTyping(); addMsg(findAnswer(text, currentLang), false); }, 700 + Math.random() * 400);
+  } finally {
+    btn.disabled = false;
+    input.focus();
+  }
+}
+
+function switchTab(tab) {
+  const sidebar   = document.querySelector('.sidebar');
+  const chatMain  = document.querySelector('.chat-main');
+  const tbProfile = document.getElementById('tbProfile');
+  const tbChat    = document.getElementById('tbChat');
+  if (tab === 'profile') {
+    sidebar.classList.add('active');
+    chatMain.classList.remove('active');
+    tbProfile.classList.add('active');
+    tbChat.classList.remove('active');
+  } else {
+    chatMain.classList.add('active');
+    sidebar.classList.remove('active');
+    tbChat.classList.add('active');
+    tbProfile.classList.remove('active');
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (!chatReady) { chatReady = true; addMsg(welcomeMsgs.en, false); }
+  renderTabs();
+  // Mobile: start on Chat tab
+  if (window.innerWidth <= 768) switchTab('chat');
+});
+</script>
+</body>
+</html>
 
