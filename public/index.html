@@ -1,1 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matteo Grassi — Portfolio</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --sidebar-bg: #111827;
+      --card: rgba(255,255,255,0.04); --border: rgba(255,255,255,0.08);
+      --accent: #0077b5; --accent2: #00a0dc;
+      --text: #e2e8f0; --muted: #94a3b8; --dim: #64748b;
+      --gold: #f59e0b;
+      --chat-bg: #f1f5f9; --chat-surface: #ffffff; --chat-border: #e2e8f0;
+      --chat-text: #0f172a; --chat-sub: #64748b;
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.6;
+      overflow: hidden;
+    }
+    @media (max-width: 768px) { body { overflow: auto; } }
+    .layout { display: flex; height: 100vh; overflow: hidden; }
+    @media (max-width: 768px) { .layout { flex-direction: column; height: auto; overflow: visible; } }
+    .sidebar {
+      width: 350px; min-width: 280px;
+      background: var(--sidebar-bg); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    @media (max-width: 768px) { .sidebar { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); overflow: visible; } }
+    .profile-block {
+      padding: 26px 22px 18px; text-align: center;
+      background: linear-gradient(180deg, rgba(0,119,181,0.13) 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    .avatar-wrap { display: inline-flex; position: relative; margin-bottom: 12px; }
+    .avatar-ring {
+      width: 88px; height: 88px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      padding: 2.5px; box-shadow: 0 0 0 4px rgba(0,119,181,0.14), 0 6px 22px rgba(0,119,181,0.28);
+    }
+    .avatar-inner {
+      width: 100%; height: 100%; border-radius: 50%;
+      background: linear-gradient(135deg, #1e3a5f, #0f2240);
+      align-items: center; justify-content: center;
+      font-size: 1.9rem; font-weight: 800; color: #fff;
+    }
+    .status-dot {
+      position: absolute; bottom: 4px; right: 0;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #10b981; border: 3px solid var(--sidebar-bg);
+    }
+    .profile-name { font-size: 1.25rem; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 3px; }
+    .profile-title { font-size: 0.8rem; color: var(--accent2); font-weight: 600; margin-bottom: 5px; }
+    .profile-meta { font-size: 0.74rem; color: var(--dim); margin-bottom: 11px; }
+    .profile-summary { font-size: 0.78rem; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+    .profile-badges { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+    .badge {
+      background: rgba(0,119,181,0.12); border: 1px solid rgba(0,119,181,0.22);
+      color: var(--accent2); padding: 3px 9px; border-radius: 20px; font-size: 0.7rem; font-weight: 500;
+    }
+    .sb { padding: 14px 18px; border-bottom: 1px solid var(--border); }
+    .sb:last-child { border-bottom: none; }
+    .sb-title { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--dim); margin-bottom: 10px; }
+    .exp-item { display: flex; gap: 9px; margin-bottom: 11px; }
+    .exp-item:last-child { margin-bottom: 0; }
+    .exp-logo {
+      width: 32px; height: 32px; border-radius: 7px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border); margin-top: 1px;
+    }
+    .exp-logo.cur { background: rgba(0,119,181,0.15); border-color: rgba(0,119,181,0.28); }
+    .exp-info { flex: 1; min-width: 0; }
+    .exp-role { font-size: 0.8rem; font-weight: 700; color: #fff; }
+    .exp-co { font-size: 0.74rem; color: var(--accent2); font-weight: 500; }
+    .exp-period { font-size: 0.68rem; color: var(--dim); }
+    .music-mini {
+      display: flex; gap: 9px; align-items: flex-start;
+      background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.16);
+      border-radius: 8px; padding: 9px 10px;
+    }
+    .music-mini-ico { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+    .music-mini-role { font-size: 0.8rem; font-weight: 700; color: #fff; }
+    .music-mini-co { font-size: 0.74rem; color: var(--gold); font-weight: 500; }
+    .music-mini-period { font-size: 0.67rem; color: var(--dim); }
+    .music-mini-desc { font-size: 0.68rem; color: var(--muted); margin-top: 3px; line-height: 1.45; }
+    .skill-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .skill-chip {
+      font-size: 0.76rem; font-weight: 500; color: var(--text);
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 20px; padding: 5px 12px; white-space: nowrap;
+      transition: background 0.18s, border-color 0.18s;
+    }
+    .skill-chip:hover { background: rgba(0,119,181,0.22); border-color: rgba(0,160,220,0.4); color: #fff; }
+    .lang-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); }
+    .lang-row:last-child { border-bottom: none; }
+    .lang-left { display: flex; align-items: center; gap: 7px; }
+    .lang-name { font-size: 0.8rem; font-weight: 600; }
+    .lang-level { font-size: 0.68rem; color: var(--accent2); background: rgba(0,119,181,0.1); border: 1px solid rgba(0,119,181,0.18); padding: 1px 7px; border-radius: 10px; }
+    .cert-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .cert-chip { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; background: rgba(0,119,181,0.09); border: 1px solid rgba(0,119,181,0.18); color: var(--accent2); }
+    .contact-bar {
+      background: var(--sidebar-bg); border-bottom: 1px solid var(--border);
+      padding: 6px 18px; display: flex; justify-content: flex-end; align-items: center;
+      gap: 6px; flex-shrink: 0; flex-wrap: wrap;
+    }
+    .cbar-link {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.72rem; color: rgba(255,255,255,0.88); text-decoration: none;
+      padding: 3px 9px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: transparent; transition: all 0.18s; white-space: nowrap;
+    }
+    .cbar-link:hover { color: #fff; border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.07); }
+    .cbar-link svg { width: 11px; height: 11px; flex-shrink: 0; }    .chat-top {
+      background: linear-gradient(135deg, #0a2540, #0077b5);
+      padding: 13px 18px; display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 10px; flex-shrink: 0;
+    }
+    .chat-top-left { display: flex; align-items: center; gap: 10px; }
+    .chat-logo { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+    .chat-top-title { font-size: 0.92rem; font-weight: 700; color: #fff; }
+    .chat-top-sub { font-size: 0.7rem; color: rgba(255,255,255,0.78); }
+    .lang-tabs { display: flex; gap: 5px; }
+    .lang-tab {
+      padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.32);
+      color: rgba(255,255,255,0.72); font-size: 0.72rem; font-weight: 600;
+      cursor: pointer; background: transparent; font-family: inherit; transition: all 0.18s;
+    }
+    .lang-tab.active, .lang-tab:hover { background: rgba(255,255,255,0.2); color: #fff; border-color: rgba(255,255,255,0.65); }
+    .lang-hint { width: 100%; font-size: 0.67rem; color: rgba(255,255,255,0.6); font-style: italic; margin-top: -4px; }
+    .suggested-tabs {
+      background: var(--chat-surface); border-bottom: 1px solid var(--chat-border);
+      overflow-x: auto; display: flex; flex-shrink: 0; scrollbar-width: none;
+    }
+    .suggested-tabs::-webkit-scrollbar { display: none; }
+    .stab {
+      padding: 9px 14px; font-size: 0.76rem; color: var(--chat-sub);
+      white-space: nowrap; cursor: pointer; border-bottom: 2px solid transparent;
+      border-right: 1px solid var(--chat-border); border-top: none; border-left: none;
+      transition: all 0.18s; background: transparent; font-family: inherit;
+    }
+    .stab:hover, .stab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(0,119,181,0.04); }
+    .messages-wrap {
+      flex: 1; overflow-y: auto; padding: 18px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .messages-wrap::-webkit-scrollbar { width: 5px; }
+    .messages-wrap::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .msg { max-width: 80%; padding: 10px 14px; border-radius: 14px; font-size: 0.875rem; line-height: 1.58; }
+    .msg-bot {
+      background: var(--chat-surface); border: 1px solid var(--chat-border);
+      color: var(--chat-text); border-radius: 4px 14px 14px 14px;
+      align-self: flex-start; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .msg-user {
+      background: linear-gradient(135deg, #0077b5, #00a0dc);
+      color: #fff; border-radius: 14px 14px 4px 14px; align-self: flex-end;
+    }
+    .msg-typing { display: flex; gap: 4px; align-items: center; padding: 12px 16px; }
+    .msg-typing span { width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; animation: bounce 1.2s infinite; }
+    .msg-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .msg-typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-7px); } }
+    .chat-input-row {
+      padding: 11px 15px; background: var(--chat-surface);
+      border-top: 1px solid var(--chat-border);
+      display: flex; gap: 8px; align-items: center; flex-shrink: 0;
+    }
+    .chat-input {
+      flex: 1; border: 1.5px solid var(--chat-border); border-radius: 22px;
+      padding: 9px 16px; font-size: 0.875rem; color: var(--chat-text);
+      background: var(--chat-bg); outline: none; font-family: inherit;
+      transition: border-color 0.2s; resize: none;
+    }
+    .chat-input:focus { border-color: var(--accent); background: #fff; }
+    .chat-input::placeholder { color: #94a3b8; }
+    .chat-send {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, #0077b5, #00a0dc);
+      border: none; color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0; transition: all 0.2s;
+    }
+    .chat-send:hover { transform: scale(1.08); }
+    .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+    .powered { text-align: center; font-size: 0.66rem; color: #94a3b8; padding: 4px 0 7px; background: var(--chat-surface); }
+  </style>
+</head>
+<body>
+<div class="layout">
 
+  <aside class="sidebar">
+    <div class="profile-block">
+      <div class="avatar-wrap">
+        <div class="avatar-ring">
+          <img id="profilePhoto" src="photo.png" alt="Matteo Grassi"
+               style="width:100%;height:100%;border-radius:50%;object-fit:cover;"
+               onerror="this.style.display='none';document.getElementById('profileInitials').style.display='flex'">
+          <div class="avatar-inner" id="profileInitials" style="display:none">MG</div>
+        </div>
+        <div class="status-dot" title="Open to conversations"></div>
+      </div>
+      <div class="profile-name">Matteo Grassi</div>
+      <div class="profile-title" data-i18n="title">Senior Account Director</div>
+      <div class="profile-meta">🔵 LinkedIn Ireland · 📍 Dublin</div>
+      <p class="profile-summary" data-i18n="summary">
+        Seasoned sales professional with 15+ years across digital marketing, SaaS, and B2B technology. At LinkedIn I lead high-impact transformation programs with C-level stakeholders, combining consultative selling and value-based storytelling to drive ROI.
+      </p>
+      <div class="profile-badges" style="margin-bottom:12px;">
+        <span class="badge">🏆 Enterprise Sales</span>
+        <span class="badge">🚀 SaaS B2B</span>
+        <span class="badge">🤝 C-Level</span>
+        <span class="badge">🌍 IT · EN · ES</span>
+      </div>
+    </div>
+
+    <div class="sb">
+      <div class="sb-title" data-i18n="exp_label">Experience</div>
+      <div class="exp-item">
+        <div class="exp-logo cur">🔵</div>
+        <div class="exp-info">
+          <div class="exp-role" data-i18n="exp0_role">Senior Account Manager</div>
+          <div class="exp-co">LinkedIn</div>
+          <div class="exp-period" data-i18n="exp0_period">Oct 2023 – Present · Dublin</div>
+        </div>
+      </div>
+      <div class="exp-item">
+        <div class="exp-logo">💳</div>
+        <div class="exp-info">
+          <div class="exp-role">Account Executive</div>
+          <div class="exp-co">Revolut</div>
+          <div class="exp-period" data-i18n="exp1_period">May – Oct 2023 · Dublin</div>
+        </div>
+      </div>
+      <div class="exp-item">
+        <div class="exp-logo">☁️</div>
+        <div class="exp-info">
+          <div class="exp-role">Senior Account Executive</div>
+          <div class="exp-co">Salesforce</div>
+          <div class="exp-period" data-i18n="exp2_period">Apr 2022 – Apr 2023 · Dublin</div>
+        </div>
+      </div>
+      <div class="exp-item">
+        <div class="exp-logo">🎯</div>
+        <div class="exp-info">
+          <div class="exp-role" data-i18n="exp3_role">Sales Manager / AM / AE – Google Ads</div>
+          <div class="exp-co">Teleperformance</div>
+          <div class="exp-period" data-i18n="exp3_period">Oct 2019 – Apr 2022 · Barcelona</div>
+        </div>
+      </div>      <div class="exp-item">
+        <div class="exp-logo">🏨</div>
+        <div class="exp-info">
+          <div class="exp-role">CS Guest Executive</div>
+          <div class="exp-co">Booking.com</div>
+          <div class="exp-period" data-i18n="exp4_period">May – Oct 2019 · Barcelona</div>
+        </div>
+      </div>
+      <div class="exp-item">
+        <div class="exp-logo">✈️</div>
+        <div class="exp-info">
+          <div class="exp-role">Hotel Market Manager</div>
+          <div class="exp-co">Ryanair</div>
+          <div class="exp-period" data-i18n="exp5_period">Jun – Dec 2018 · Madrid</div>
+        </div>
+      </div>
+      <div class="exp-item">
+        <div class="exp-logo">🔍</div>
+        <div class="exp-info">
+          <div class="exp-role" data-i18n="exp6_role">BizDev Manager – Italy & S.Europe</div>
+          <div class="exp-co">HotelsCombined (Kayak)</div>
+          <div class="exp-period" data-i18n="exp6_period">Aug 2016 – Dec 2017 · Barcelona</div>
+        </div>
+      </div>
+      <div class="exp-item">
+        <div class="exp-logo">💡</div>
+        <div class="exp-info">
+          <div class="exp-role">Senior Digital Consultant</div>
+          <div class="exp-co">Ve Interactive</div>
+          <div class="exp-period" data-i18n="exp7_period">Oct 2015 – Jul 2016 · Milan</div>
+        </div>
+      </div>
+      <div class="exp-item">
+        <div class="exp-logo">🗺️</div>
+        <div class="exp-info">
+          <div class="exp-role">Account Manager / Exec EMEA</div>
+          <div class="exp-co">TripAdvisor</div>
+          <div class="exp-period" data-i18n="exp8_period">May 2013 – Oct 2015 · Oxford</div>
+        </div>
+      </div>
+      <div class="exp-item">
+        <div class="exp-logo">📞</div>
+        <div class="exp-info">
+          <div class="exp-role">Bilingual Reservation Sales Agent</div>
+          <div class="exp-co">Sabre Hospitality Solutions</div>
+          <div class="exp-period" data-i18n="exp9_period">Jul 2012 – Mar 2013</div>
+        </div>
+      </div>
+      <div class="exp-item">
+        <div class="exp-logo">🚢</div>
+        <div class="exp-info">
+          <div class="exp-role">Customer Service – Export Global</div>
+          <div class="exp-co">Maersk Line</div>
+          <div class="exp-period" data-i18n="exp10_period">Jul 2008 – Oct 2009</div>
+        </div>
+      </div>
+      <div class="exp-item">
+        <div class="exp-logo">📱</div>
+        <div class="exp-info">
+          <div class="exp-role">Regional Field Sales Manager</div>
+          <div class="exp-co">Nokia</div>
+          <div class="exp-period" data-i18n="exp11_period">Jul 2005 – Apr 2008 · Liguria</div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <div class="sb-title" style="margin-bottom:7px;" data-i18n="music_label">🎸 Hobby & Passion</div>
+        <div class="music-mini">
+          <div class="music-mini-ico">🎸</div>
+          <div>
+            <div class="music-mini-role" data-i18n="music_role">Lead Guitarist</div>
+            <div class="music-mini-co">Klasse Kriminale</div>
+            <div class="music-mini-period" data-i18n="music_period">Sep 1997 – Jul 2007 · 9 yrs 11 mo</div>
+            <div class="music-mini-desc" data-i18n="music_desc">300+ concerts · 7 studio albums · Europe, US, Canada, Japan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sb">
+      <div class="sb-title" data-i18n="skills_label">Key Skills</div>
+      <div class="skill-chips">
+        <span class="skill-chip">B2B Enterprise Sales</span>
+        <span class="skill-chip">Strategic Account Mgmt</span>
+        <span class="skill-chip">SaaS Sales</span>
+        <span class="skill-chip">Talent Solutions</span>
+        <span class="skill-chip">C-Suite Engagement</span>
+        <span class="skill-chip">Revenue Management</span>
+        <span class="skill-chip">CRM &amp; Pipeline</span>
+        <span class="skill-chip">Team Leadership</span>
+        <span class="skill-chip">Business Development</span>
+        <span class="skill-chip">Go-to-Market Strategy</span>
+        <span class="skill-chip">Lead Qualification</span>
+        <span class="skill-chip">Salesforce CRM</span>
+      </div>
+    </div>
+
+    <div class="sb">
+      <div class="sb-title" data-i18n="lang_label">Languages</div>
+      <div class="lang-row">
+        <div class="lang-left"><span style="font-size:1rem;">🇮🇹</span><span class="lang-name" data-i18n="lang_it">Italian</span></div>
+        <span class="lang-level" data-i18n="lang_it_level">Native</span>
+      </div>
+      <div class="lang-row">
+        <div class="lang-left"><span style="font-size:1rem;">🇬🇧</span><span class="lang-name" data-i18n="lang_en">English</span></div>
+        <span class="lang-level" data-i18n="lang_en_level">Full Professional</span>
+      </div>
+      <div class="lang-row">
+        <div class="lang-left"><span style="font-size:1rem;">🇪🇸</span><span class="lang-name" data-i18n="lang_es">Spanish</span></div>
+        <span class="lang-level" data-i18n="lang_es_level">Full Professional</span>
+      </div>
+    </div>
+
+    <div class="sb">
+      <div class="sb-title" data-i18n="cert_label">Certifications</div>
+      <div class="cert-chips">
+        <span class="cert-chip">Salesforce</span>
+        <span class="cert-chip">Sell with NLP</span>
+        <span class="cert-chip">Google Ads</span>
+        <span class="cert-chip">CAM – Digital Marketing</span>
+      </div>
+    </div>
+
+  </aside>
+
+  <main class="chat-main">
+    <div class="contact-bar">
+      <a href="mailto:matteo1789@gmail.com" class="cbar-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        matteo1789@gmail.com
+      </a>
+      <a href="tel:+3530892334107" class="cbar-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+        +353 089 233 4107
+      </a>
+      <a href="https://linkedin.com/in/grassimatteo" target="_blank" class="cbar-link">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+        linkedin.com/in/grassimatteo
+      </a>
+    </div>
+
+    <div class="chat-top">
+      <div class="chat-top-left">
+        <div class="chat-logo">🤖</div>
+        <div>
+          <div class="chat-top-title" data-i18n="chat_title">AI Interview Assistant</div>
+          <div class="chat-top-sub" data-i18n="chat_sub">Ask me anything about Matteo's experience, skills or background</div>
+        </div>
+      </div>
+      <div>
+        <div class="lang-tabs">
+          <button class="lang-tab active" id="tab-en" onclick="setLang('en')">🇬🇧 EN</button>          <button class="lang-tab active" id="tab-en" onclick="setLang('en')">🇬🇧 EN</button>
+          <button class="lang-tab" id="tab-it" onclick="setLang('it')">🇮🇹 IT</button>
+          <button class="lang-tab" id="tab-es" onclick="setLang('es')">🇪🇸 ES</button>
+        </div>
+        <div class="lang-hint" id="langHint">You can chat in English, Italian, or Spanish</div>
+      </div>
+    </div>
+
+    <div class="suggested-tabs" id="suggestedTabs"></div>
+    <div class="messages-wrap" id="chatMessages"></div>
+
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chatInput" rows="1"
+        placeholder="Ask me anything…"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,90)+'px'"></textarea>
+      <button class="chat-send" id="sendBtn" onclick="sendMessage()">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="powered">Powered by AI · Profile of Matteo Grassi</div>
+
+  </main>
+</div>
+
+<script>
+const translations = {
+  en: {
+    title: 'Senior Account Director',
+    summary: 'Seasoned sales professional with 15+ years across digital marketing, SaaS, and B2B technology. At LinkedIn I lead high-impact transformation programs with C-level stakeholders, combining consultative selling and value-based storytelling to drive ROI.',
+    exp_label: 'Experience',
+    exp0_role: 'Senior Account Manager', exp0_period: 'Oct 2023 – Present · Dublin',
+    exp1_period: 'May – Oct 2023 · Dublin',
+    exp2_period: 'Apr 2022 – Apr 2023 · Dublin',
+    exp3_role: 'Sales Manager / AM / AE – Google Ads', exp3_period: 'Oct 2019 – Apr 2022 · Barcelona',
+    exp4_period: 'May – Oct 2019 · Barcelona',
+    exp5_period: 'Jun – Dec 2018 · Madrid',
+    exp6_role: 'BizDev Manager – Italy & S.Europe', exp6_period: 'Aug 2016 – Dec 2017 · Barcelona',
+    exp7_period: 'Oct 2015 – Jul 2016 · Milan',
+    exp8_period: 'May 2013 – Oct 2015 · Oxford',
+    exp9_period: 'Jul 2012 – Mar 2013',
+    exp10_period: 'Jul 2008 – Oct 2009',
+    exp11_period: 'Jul 2005 – Apr 2008 · Liguria',
+    music_label: '🎸 Hobby & Passion',
+    music_role: 'Lead Guitarist', music_period: 'Sep 1997 – Jul 2007 · 9 yrs 11 mo',
+    music_desc: '300+ concerts · 7 studio albums · Europe, US, Canada, Japan',
+    skills_label: 'Key Skills',
+    lang_label: 'Languages',
+    lang_it: 'Italian', lang_it_level: 'Native',
+    lang_en: 'English', lang_en_level: 'Full Professional',
+    lang_es: 'Spanish', lang_es_level: 'Full Professional',
+    cert_label: 'Certifications',
+    chat_title: 'AI Interview Assistant',
+    chat_sub: 'Ask me anything about Matteo\'s experience, skills or background',
+  },
+  it: {
+    title: 'Senior Account Director',
+    summary: 'Professionista delle vendite con oltre 15 anni di esperienza in digital marketing, SaaS e B2B technology. In LinkedIn guido programmi di trasformazione ad alto impatto con stakeholder C-level, combinando vendita consultiva e value-based storytelling.',
+    exp_label: 'Esperienza',
+    exp0_role: 'Senior Account Manager', exp0_period: 'Ott 2023 – Presente · Dublino',
+    exp1_period: 'Mag – Ott 2023 · Dublino',
+    exp2_period: 'Apr 2022 – Apr 2023 · Dublino',
+    exp3_role: 'Sales Manager / AM / AE – Google Ads', exp3_period: 'Ott 2019 – Apr 2022 · Barcellona',
+    exp4_period: 'Mag – Ott 2019 · Barcellona',
+    exp5_period: 'Giu – Dic 2018 · Madrid',
+    exp6_role: 'BizDev Manager – Italia & Europa Merid.', exp6_period: 'Ago 2016 – Dic 2017 · Barcellona',
+    exp7_period: 'Ott 2015 – Lug 2016 · Milano',
+    exp8_period: 'Mag 2013 – Ott 2015 · Oxford',
+    exp9_period: 'Lug 2012 – Mar 2013',
+    exp10_period: 'Lug 2008 – Ott 2009',
+    exp11_period: 'Lug 2005 – Apr 2008 · Liguria',
+    music_label: '🎸 Hobby & Passione',
+    music_role: 'Chitarrista Solista', music_period: 'Set 1997 – Lug 2007 · 9 anni 11 mesi',
+    music_desc: '300+ concerti · 7 album in studio · Europa, USA, Canada, Giappone',
+    skills_label: 'Competenze Chiave',
+    lang_label: 'Lingue',
+    lang_it: 'Italiano', lang_it_level: 'Madrelingua',
+    lang_en: 'Inglese', lang_en_level: 'Full Professional',
+    lang_es: 'Spagnolo', lang_es_level: 'Full Professional',
+    cert_label: 'Certificazioni',
+    chat_title: 'AI Interview Assistant',
+    chat_sub: 'Chiedimi qualcosa sull\'esperienza, le competenze o il background di Matteo',
+  },
+  es: {
+    title: 'Director de Cuentas Senior',
+    summary: 'Profesional de ventas con más de 15 años de experiencia en marketing digital, SaaS y B2B technology. En LinkedIn lidero programas de transformación de alto impacto con stakeholders de nivel C.',
+    exp_label: 'Experiencia',
+    exp0_role: 'Senior Account Manager', exp0_period: 'Oct 2023 – Presente · Dublín',
+    exp1_period: 'May – Oct 2023 · Dublín',
+    exp2_period: 'Abr 2022 – Abr 2023 · Dublín',
+    exp3_role: 'Sales Manager / AM / AE – Google Ads', exp3_period: 'Oct 2019 – Abr 2022 · Barcelona',
+    exp4_period: 'May – Oct 2019 · Barcelona',
+    exp5_period: 'Jun – Dic 2018 · Madrid',
+    exp6_role: 'BizDev Manager – Italia & Europa del Sur', exp6_period: 'Ago 2016 – Dic 2017 · Barcelona',
+    exp7_period: 'Oct 2015 – Jul 2016 · Milán',
+    exp8_period: 'May 2013 – Oct 2015 · Oxford',
+    exp9_period: 'Jul 2012 – Mar 2013',
+    exp10_period: 'Jul 2008 – Oct 2009',
+    exp11_period: 'Jul 2005 – Abr 2008 · Liguria',
+    music_label: '🎸 Hobby y Pasión',
+    music_role: 'Guitarrista Principal', music_period: 'Sep 1997 – Jul 2007 · 9 años 11 meses',
+    music_desc: '300+ conciertos · 7 álbumes de estudio · Europa, EE.UU., Canadá, Japón',
+    skills_label: 'Habilidades Clave',
+    lang_label: 'Idiomas',
+    lang_it: 'Italiano', lang_it_level: 'Lengua materna',
+    lang_en: 'Inglés', lang_en_level: 'Full Professional',
+    lang_es: 'Español', lang_es_level: 'Full Professional',
+    cert_label: 'Certificaciones',
+    chat_title: 'AI Interview Assistant',
+    chat_sub: 'Pregúntame sobre la experiencia, habilidades o trayectoria de Matteo',
+  }
+};
+
+const welcomeMsgs = {
+  en: '👋 Hi! I\'m Matteo Grassi\'s AI assistant. Ask me about his experience at LinkedIn, Salesforce, TripAdvisor, Nokia and more — or even his music career! You can chat in English, Italian, or Spanish.',
+  it: '👋 Ciao! Sono l\'assistente AI di Matteo Grassi. Puoi chiedermi della sua esperienza in LinkedIn, Salesforce, TripAdvisor, Nokia e non solo — o anche della sua carriera musicale! Parliamo in italiano, inglese o spagnolo.',
+  es: '👋 ¡Hola! Soy el asistente IA de Matteo Grassi. Puedes preguntarme sobre su experiencia en LinkedIn, Salesforce, TripAdvisor, Nokia y más — ¡o incluso sobre su carrera musical! Podemos hablar en inglés, italiano o español.'
+};
+
+const langHints = {
+  en: 'You can chat in English, Italian, or Spanish',
+  it: 'Puoi chattare in italiano, inglese o spagnolo',
+  es: 'Puedes chatear en español, inglés o italiano'
+};
+
+const suggestedQsSets = {
+  en: ['Tell me about your role at LinkedIn', 'What\'s your biggest achievement?', 'How do you handle C-level negotiations?', 'Have you managed teams?', 'Tell me about your international career', 'What\'s the music story?'],
+  it: ['Parlami del tuo ruolo in LinkedIn', 'Qual è il tuo traguardo più importante?', 'Come gestisci trattative con C-level?', 'Hai gestito team?', 'Raccontami la tua carriera internazionale', 'Raccontami della musica'],
+  es: ['Cuéntame sobre tu rol en LinkedIn', '¿Cuál es tu mayor logro?', '¿Cómo manejas negociaciones C-level?', '¿Has gestionado equipos?', 'Cuéntame de tu carrera internacional', '¿Y la música?']
+};
+
+const placeholders = { en: 'Ask me anything…', it: 'Scrivi un messaggio…', es: 'Escribe un mensaje…' };
+
+const kb = {
+  en: {
+    linkedin:     'At LinkedIn I lead complex negotiations and multi-year transformation programs, collaborating with C-level stakeholders to align talent strategy with business outcomes. My approach combines consultative selling, multithreading, and value-based storytelling to accelerate decisions and maximise ROI.',
+    achievement:  'I\'ve been recognised as Star Performer and Salesperson of the Month across different companies. At TripAdvisor I consistently achieved 130% of my sales quota. At Nokia I delivered over €1.7M in cumulative annual sales for the Liguria region.',
+    clevel:       'I start C-level conversations from their strategic objectives, not from our product. I build trust through consistent value delivery, multi-threading across departments, and treating every interaction as a long-term investment in the relationship.',
+    team:         'At Teleperformance I managed a team of 13 salespeople (SDRs and AEs), responsible for KPIs, forecasting, coaching, and performance analysis. I also led junior teams at HotelsCombined and Ve Interactive.',
+    international:'My career spans Italy (Nokia, Liguria), Spain (Barcelona & Madrid at Teleperformance, Booking.com, HotelsCombined, Ryanair), the UK (Oxford at TripAdvisor), and Ireland (Dublin at Salesforce, Revolut and LinkedIn). I\'ve worked with EMEA clients across tech, travel, SaaS and digital advertising.',
+    music:        'I was Lead Guitarist for Klasse Kriminale from 1997 to 2007 — nearly 10 years full-time. 300+ concerts, 7 studio albums, tours across Europe, US, Canada and Japan. I shared the stage with Dropkick Murphys, Sham 69, Cock Sparrer, Agnostic Front, Madball and many more.',
+    skills:       'My core skills: B2B Enterprise Sales, Strategic Account Management, SaaS Sales, Talent Solutions, Executive Stakeholder Engagement, and CRM & Pipeline. Certified in Salesforce, Google Ads, and CAM Digital Marketing.',
+    contact:      'You can reach Matteo at matteo1789@gmail.com, call +353 089 233 4107, or connect on LinkedIn: linkedin.com/in/grassimatteo.',
+    default:      'I\'m here to tell you about Matteo\'s career — 15+ years across LinkedIn, Salesforce, TripAdvisor, Nokia, and more — or his music career with Klasse Kriminale. What would you like to know?'
+  },
+  it: {
+    linkedin:     'In LinkedIn guido trattative complesse e programmi di trasformazione pluriennali, collaborando con stakeholder C-level per allineare la strategia del talento con gli obiettivi aziendali. Combino vendita consultiva, multi-threading e value-based storytelling.',
+    achievement:  'Sono stato riconosciuto come Star Performer e Salesperson of the Month in diversi ruoli. In TripAdvisor ho raggiunto costantemente il 130% del quota. In Nokia ho superato €1,7M di vendite cumulative annue per la Liguria.',
+    clevel:       'Nelle conversazioni C-level parto dagli obiettivi strategici del cliente, non dal prodotto. Costruisco fiducia attraverso la consegna costante di valore, relazioni multi-livello e un approccio di lungo periodo.',
+    team:         'In Teleperformance ho gestito un team di 13 persone (SDR e AE), responsabile di KPI, forecast, coaching e analisi delle performance. Ho guidato team junior anche in HotelsCombined e Ve Interactive.',
+    international:'La mia carriera tocca Italia (Nokia, Liguria), Spagna (Barcellona e Madrid), UK (Oxford, TripAdvisor) e Irlanda (Dublino, Salesforce, Revolut, LinkedIn). Ho lavorato con clienti EMEA in tech, travel, SaaS e advertising.',
+    music:        'Sono stato chitarrista solista dei Klasse Kriminale dal 1997 al 2007 — quasi 10 anni a tempo pieno. 300+ concerti, 7 album in studio, tour in Europa, USA, Canada e Giappone. Sul palco con Dropkick Murphys, Sham 69, Agnostic Front, Madball e molti altri.',
+    skills:       'Le mie competenze: B2B Enterprise Sales, Strategic Account Management, SaaS Sales, Talent Solutions, Executive Stakeholder Engagement, CRM & Pipeline. Certificato in Salesforce, Google Ads e CAM Digital Marketing.',
+    contact:      'Puoi contattare Matteo a matteo1789@gmail.com, chiamare il +353 089 233 4107 o su LinkedIn: linkedin.com/in/grassimatteo.',
+    default:      'Sono qui per parlarti della carriera di Matteo — 15+ anni tra LinkedIn, Salesforce, TripAdvisor, Nokia e altro — o della sua carriera musicale con i Klasse Kriminale. Cosa vuoi sapere?'
+  },
+  es: {
+    linkedin:     'En LinkedIn lidero negociaciones complejas y programas de transformación plurianuales, colaborando con directivos de nivel C para alinear la estrategia de talento con los objetivos empresariales.',
+    achievement:  'He sido reconocido como Star Performer y Salesperson of the Month en varias empresas. En TripAdvisor alcancé el 130% de cuota de manera consistente. En Nokia superé €1,7M en ventas anuales acumuladas.',
+    clevel:       'En conversaciones con directivos de nivel C, comienzo desde sus objetivos estratégicos, no desde el producto. Construyo confianza con entrega constante de valor y relaciones multi-nivel.',
+    team:         'En Teleperformance gestioné un equipo de 13 personas (SDRs y AEs), responsable de KPIs, forecast, coaching y análisis de rendimiento. También lideré equipos junior en HotelsCombined y Ve Interactive.',
+    international:'Mi carrera abarca Italia (Nokia, Liguria), España (Barcelona y Madrid), Reino Unido (Oxford, TripAdvisor) e Irlanda (Dublín, Salesforce, Revolut, LinkedIn). He trabajado con clientes EMEA en tech, travel, SaaS y publicidad.',
+    music:        'Fui guitarrista principal de Klasse Kriminale de 1997 a 2007 — casi 10 años a tiempo completo. 300+ conciertos, 7 álbumes de estudio, giras por Europa, EE.UU., Canadá y Japón. Compartí escenario con Dropkick Murphys, Sham 69, Agnostic Front, Madball y muchos más.',
+    skills:       'Mis competencias: Ventas B2B Enterprise, Gestión Estratégica de Cuentas, SaaS Sales, Talent Solutions, Engagement con Ejecutivos, CRM y Pipeline. Certificado en Salesforce, Google Ads y CAM Digital Marketing.',    contact:      'Puedes contactar a Matteo en matteo1789@gmail.com, llamar al +353 089 233 4107 o en LinkedIn: linkedin.com/in/grassimatteo.',
+    default:      'Estoy aquí para contarte sobre la carrera de Matteo — más de 15 años en LinkedIn, Salesforce, TripAdvisor, Nokia y más — o su carrera musical con Klasse Kriminale. ¿Qué te gustaría saber?'
+  }
+};
+
+function findAnswer(msg, l) {
+  const m = msg.toLowerCase();
+  const k = kb[l] || kb.en;
+  if (m.includes('linkedin') || m.includes('role') || m.includes('ruolo') || m.includes('rol')) return k.linkedin;
+  if (m.includes('achiev') || m.includes('success') || m.includes('logro') || m.includes('successo') || m.includes('award') || m.includes('performer')) return k.achievement;
+  if (m.includes('c-level') || m.includes('negotiat') || m.includes('trattativ') || m.includes('negoci') || m.includes('c level')) return k.clevel;
+  if (m.includes('team') || m.includes('manag') || m.includes('gestione') || m.includes('gestión')) return k.team;
+  if (m.includes('internat') || m.includes('career') || m.includes('carriera') || m.includes('carrera') || m.includes('country')) return k.international;
+  if (m.includes('music') || m.includes('guitar') || m.includes('klasse') || m.includes('band') || m.includes('concert') || m.includes('album') || m.includes('musica')) return k.music;
+  if (m.includes('skill') || m.includes('competenz') || m.includes('habilidad') || m.includes('certif')) return k.skills;
+  if (m.includes('contact') || m.includes('email') || m.includes('phone') || m.includes('telefon')) return k.contact;
+  return k.default;
+}
+
+let currentLang = 'en';
+let chatReady = false;
+
+function setLang(l) {
+  currentLang = l;
+  ['en','it','es'].forEach(id => document.getElementById('tab-' + id).classList.toggle('active', id === l));
+  document.getElementById('langHint').textContent = langHints[l];
+  document.getElementById('chatInput').placeholder = placeholders[l];
+  const t = translations[l];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key] !== undefined) el.textContent = t[key];
+  });
+  renderTabs();
+}
+
+function renderTabs() {
+  const container = document.getElementById('suggestedTabs');
+  container.innerHTML = '';
+  suggestedQsSets[currentLang].forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'stab';
+    btn.textContent = q;
+    btn.onclick = () => {
+      document.querySelectorAll('.stab').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('chatInput').value = q;
+      sendMessage();
+    };
+    container.appendChild(btn);
+  });
+}
+
+function addMsg(text, isUser) {
+  const msgs = document.getElementById('chatMessages');
+  const d = document.createElement('div');
+  d.className = 'msg ' + (isUser ? 'msg-user' : 'msg-bot');
+  d.textContent = text;
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('chatMessages');
+  const d = document.createElement('div');
+  d.className = 'msg msg-bot msg-typing'; d.id = 'typing';
+  d.innerHTML = '<span></span><span></span><span></span>';
+  msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+}
+
+function hideTyping() { const t = document.getElementById('typing'); if (t) t.remove(); }
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const btn = document.getElementById('sendBtn');
+  const text = input.value.trim();
+  if (!text) return;
+  addMsg(text, true);
+  input.value = ''; input.style.height = 'auto';
+  btn.disabled = true;
+  showTyping();
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, lang: currentLang })
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    hideTyping();
+    addMsg(data.reply || 'Error in response.', false);
+  } catch {
+    setTimeout(() => { hideTyping(); addMsg(findAnswer(text, currentLang), false); }, 700 + Math.random() * 400);
+  } finally {
+    btn.disabled = false;
+    input.focus();
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (!chatReady) { chatReady = true; addMsg(welcomeMsgs.en, false); }
+  renderTabs();
+});
+</script>
+</body>
+</html>
