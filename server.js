@@ -176,6 +176,29 @@ app.post('/api/chat', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+app.get('/api/test', async (req, res) => {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.json({ status: 'NO KEY SET' });
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 20,
+        messages: [{ role: 'user', content: 'Say OK' }]
+      })
+    });
+    const data = await r.json();
+    res.json({ status: r.status, data });
+  } catch(e) {
+    res.json({ status: 'ERROR', error: e.message });
+  }
+});
 app.listen(PORT, () => {
   console.log(`✅ Portfolio server running at http://localhost:${PORT}`);
 });
