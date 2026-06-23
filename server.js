@@ -32,7 +32,7 @@ app.get('/api/test', (req, res) => {
   if (!key) return res.json({ ok: false, error: 'NO KEY' });
 
   const body = JSON.stringify({
-    model: 'claude-3-haiku-20240307',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 30,
     system: 'You are a helpful assistant.',
     messages: [{ role: 'user', content: 'Say the word OK' }]
