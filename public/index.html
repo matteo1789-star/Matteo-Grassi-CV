@@ -268,7 +268,26 @@
     .chat-send:hover { transform: scale(1.08); }
     .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
     .powered { text-align: center; font-size: 0.66rem; color: #94a3b8; padding: 4px 0 7px; background: var(--chat-surface); }
-  </style>
+     /* ── Domande suggerite: scorrimento + pulsante "mostra tutte" ── */
+    .suggested-wrap {
+      display: flex; align-items: stretch; flex-shrink: 0;
+      background: var(--chat-surface); border-bottom: 1px solid var(--chat-border);
+    }
+    .suggested-wrap .suggested-tabs { flex: 1 1 auto; border-bottom: none; min-width: 0; }
+    .suggested-tabs.expanded {
+      flex-wrap: wrap; overflow-x: visible;
+      max-height: 42vh; overflow-y: auto;
+    }
+    .more-btn {
+      flex-shrink: 0; border: none; border-left: 1px solid var(--chat-border);
+      background: var(--chat-surface); color: var(--accent);
+      cursor: pointer; font-size: 1rem; font-weight: 700; line-height: 1;
+      padding: 0 15px; display: flex; align-items: center; justify-content: center;
+      font-family: inherit; box-shadow: -16px 0 16px -10px rgba(0,0,0,0.18);
+      transition: background 0.18s;
+    }
+    .more-btn:hover { background: rgba(0,119,181,0.07); }
+    .suggested-wrap.open .more-btn { box-shadow: none; } </style>
 </head>
 <body>
 <div class="layout">
@@ -514,8 +533,10 @@
       </div>
     </div>
 
-    <div class="suggested-tabs" id="suggestedTabs"></div>
-
+<div class="suggested-wrap">
+  <div class="suggested-tabs" id="suggestedTabs"></div>
+  <button class="more-btn" id="moreBtn" onclick="toggleTabs()" title="Mostra tutte le domande" aria-label="Mostra tutte le domande">▾</button>
+</div>
     <div class="messages-wrap" id="chatMessages"></div>
 
     <div class="chat-input-row">
@@ -853,6 +874,15 @@ function findAnswer(msg, l) {
   return k.default;
 }
 
+function toggleTabs() {
+  const tabs = document.getElementById('suggestedTabs');
+  const wrap = document.querySelector('.suggested-wrap');
+  const btn = document.getElementById('moreBtn');
+  const expanded = tabs.classList.toggle('expanded');
+  wrap.classList.toggle('open', expanded);
+  btn.textContent = expanded ? '▴' : '▾';
+  btn.title = expanded ? 'Mostra meno' : 'Mostra tutte le domande';
+}
 let currentLang = 'en';
 let chatReady = false;
 
