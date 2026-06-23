@@ -1,7 +1,17 @@
-# Copia questo file in .env e inserisci la tua API key OpenAI
-# Copy this file to .env and add your OpenAI API key
-
-OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-# Porta locale (opzionale, default: 3000)
-PORT=3000
+{
+  "name": "portfolio-matteo-grassi",
+  "version": "1.0.0",
+  "description": "Portfolio interattivo di Matteo Grassi con chat AI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "openai": "^4.52.0",
+    "dotenv": "^16.4.5"
+  }
+}
