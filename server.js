@@ -106,7 +106,6 @@ R: CRM data accuracy +40%; forecasting accuracy up from 70% to 90%; better prior
 
 === END OF KNOWLEDGE ===
 Remember: third person, match the user's language, lead with concrete results, and be honest when a detail isn't in this information.`;
-Se non conosci un dato, dillo onestamente invece di inventarlo.`;
 
 // ─────────────────────────────────────────────
 // Endpoint di test: verifica chiave + connessione
